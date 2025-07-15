@@ -3,7 +3,18 @@ extends Node
 var players : Array[Player]
 var local_player : Player
 
+# Game configuration settings
 var score_to_win : int = 3
+var player_lives : int = 3
+var max_players : int = 4
+var speed_multiplier : float = 1.0
+var damage_multiplier : float = 1.0
+var has_time_limit : bool = false
+var time_limit_minutes : int = 10
+
+# Time limit tracking
+var time_limit_seconds : float = 0.0
+var game_timer : Timer
 
 var min_x : float = -400
 var max_x : float = 400
@@ -28,6 +39,61 @@ func _ready():
 	timer.timeout.connect(_check_for_new_players)
 	timer.autostart = true
 	add_child(timer)
+	
+	# Create game timer for time limits
+	game_timer = Timer.new()
+	game_timer.wait_time = 1.0  # Update every second
+	game_timer.timeout.connect(_on_game_timer_timeout)
+	add_child(game_timer)
+
+func apply_server_config(config: Dictionary):
+	"""Apply server configuration settings to the game"""
+	player_lives = config.get("player_lives", 3)
+	max_players = config.get("max_players", 4)
+	speed_multiplier = config.get("speed_multiplier", 1.0)
+	damage_multiplier = config.get("damage_multiplier", 1.0)
+	has_time_limit = config.get("has_time_limit", false)
+	time_limit_minutes = config.get("time_limit_minutes", 10)
+	
+	# Start time limit if enabled
+	if has_time_limit:
+		time_limit_seconds = time_limit_minutes * 60.0
+		game_timer.start()
+		print("Game started with %d minute time limit" % time_limit_minutes)
+	
+	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx" % [player_lives, max_players, speed_multiplier, damage_multiplier])
+
+func _on_game_timer_timeout():
+	"""Handle time limit countdown"""
+	if has_time_limit and time_limit_seconds > 0:
+		time_limit_seconds -= 1.0
+		
+		# Warn players at certain intervals
+		if time_limit_seconds == 60.0:  # 1 minute left
+			print("1 minute remaining!")
+		elif time_limit_seconds == 10.0:  # 10 seconds left
+			print("10 seconds remaining!")
+		elif time_limit_seconds <= 0:
+			# Time's up - end game
+			_time_limit_reached()
+
+func _time_limit_reached():
+	"""Handle when time limit is reached"""
+	game_timer.stop()
+	
+	# Find player with highest score
+	var highest_score = -1
+	var winner: Player = null
+	
+	for player in players:
+		if player.score > highest_score:
+			highest_score = player.score
+			winner = player
+	
+	if winner:
+		end_game_clients.rpc(winner.player_name + " (Time Limit)")
+	else:
+		end_game_clients.rpc("Time Limit Reached")
 
 func _check_for_new_players():
 	# Create health bars for any players that don't have one yet
@@ -63,7 +129,7 @@ func get_random_position () -> Vector2:
 	var y = randf_range(min_y, max_y)
 	return Vector2(x, y)
 
-# called when a player is killed
+# called when a player is killed (but still has lives)
 func on_player_die (player_id : int, attacker_id : int):
 	var player : Player = get_player(player_id)
 	var attacker : Player = get_player(attacker_id)
@@ -71,6 +137,28 @@ func on_player_die (player_id : int, attacker_id : int):
 	attacker.increase_score(1)
 	
 	if attacker.score >= score_to_win:
+		end_game_clients.rpc(attacker.player_name)
+
+# called when a player is eliminated (no lives remaining)
+func on_player_eliminated (player_id : int, attacker_id : int):
+	var player : Player = get_player(player_id)
+	var attacker : Player = get_player(attacker_id)
+	
+	attacker.increase_score(1)
+	
+	print("Player %s eliminated! (%d lives remaining: %d)" % [player.player_name, player.player_name, player.lives_remaining])
+	
+	# Check if only one player remains alive
+	var alive_players = []
+	for p in players:
+		if p.lives_remaining > 0:
+			alive_players.append(p)
+	
+	if alive_players.size() <= 1 and alive_players.size() > 0:
+		# Last player standing wins
+		end_game_clients.rpc(alive_players[0].player_name + " (Last Standing)")
+	elif attacker.score >= score_to_win:
+		# Attacker reached score limit
 		end_game_clients.rpc(attacker.player_name)
 
 # finds the player belonging to the player_id
@@ -87,6 +175,13 @@ func reset_game():
 	for player in players:
 		player.respawn()
 		player.score = 0
+		# Reset lives to configured amount
+		player.lives_remaining = player_lives
+	
+	# Reset time limit
+	if has_time_limit:
+		time_limit_seconds = time_limit_minutes * 60.0
+		game_timer.start()
 	
 	reset_game_clients.rpc()
 

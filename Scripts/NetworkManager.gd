@@ -6,6 +6,11 @@ const MAX_CLIENTS : int = 4
 @onready var ip_input = $NetworkUI/VBoxContainer/IPInput
 @onready var port_input = $NetworkUI/VBoxContainer/PortInput
 
+# Server configuration
+var server_config_scene = preload("res://Scenes/ServerConfig.tscn")
+var server_config_ui = null
+var current_server_config = {}
+
 var player_scene = preload("res://Scenes/Player.tscn")
 @onready var spawned_nodes = $SpawnedNodes
 
@@ -17,18 +22,49 @@ var spawn_y_range : float = 200
 func _ready():
 	pass
 
-# create a multiplayer game
+# show server configuration menu instead of immediately starting
 func start_host ():
+	# Create and show server configuration UI
+	if server_config_ui == null:
+		server_config_ui = server_config_scene.instantiate()
+		get_tree().current_scene.add_child(server_config_ui)
+		
+		# Connect signals
+		server_config_ui.server_config_confirmed.connect(_on_server_config_confirmed)
+		server_config_ui.back_to_main_menu.connect(_on_server_config_back)
+	
+	# Hide main network UI and show config
+	network_ui.visible = false
+	server_config_ui.visible = true
+
+# called when server configuration is confirmed
+func _on_server_config_confirmed(config: Dictionary):
+	current_server_config = config
+	server_config_ui.visible = false
+	_actually_start_server()
+
+# called when user goes back from server config
+func _on_server_config_back():
+	server_config_ui.visible = false
+	network_ui.visible = true
+
+# actually create the server with the configured settings
+func _actually_start_server():
+	var max_clients = current_server_config.get("max_players", MAX_CLIENTS)
+	
 	var peer = ENetMultiplayerPeer.new()
-	peer.create_server(int(port_input.text), MAX_CLIENTS)
+	peer.create_server(int(port_input.text), max_clients)
 	multiplayer.multiplayer_peer = peer
 	
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
 	
-	_on_player_connected(multiplayer.get_unique_id())
+	# Apply configuration to GameManager
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager.apply_server_config(current_server_config)
 	
-	network_ui.visible = false
+	_on_player_connected(multiplayer.get_unique_id())
 
 # join a multiplayer game
 func start_client ():
@@ -73,6 +109,13 @@ func _connection_failed ():
 func _server_disconnected ():
 	print("Server disconnected.")
 	network_ui.visible = true
+	
+	# Hide server config if it's visible
+	if server_config_ui:
+		server_config_ui.visible = false
 
 func _on_username_input_text_changed(new_text):
 	local_username = new_text
+
+func get_server_config() -> Dictionary:
+	return current_server_config

@@ -1,6 +1,7 @@
 extends Area2D
 
 @export var speed : float = 500.0
+@export var base_damage : int = 10  # Base damage before multiplier
 var owner_id : int
 
 func _ready():
@@ -20,7 +21,13 @@ func _on_body_entered(body):
 	if body.player_id == owner_id:
 		return
 	
-	body.take_damage(10, owner_id)
+	# Apply damage multiplier from game configuration
+	var damage = base_damage
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		damage = int(base_damage * game_manager.damage_multiplier)
+	
+	body.take_damage(damage, owner_id)
 	queue_free()
 
 func _on_timer_timeout():

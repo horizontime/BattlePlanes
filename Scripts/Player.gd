@@ -8,7 +8,8 @@ class_name Player
 		$InputSynchronizer.set_multiplayer_authority(id)
 		_set_ship_sprite() # Add this line
 
-@export var max_speed : float = 150.0
+@export var base_max_speed : float = 150.0  # Base speed before multiplier
+@export var max_speed : float = 150.0  # Actual speed with multiplier applied
 @export var turn_rate : float = 2.5
 var throttle : float = 0.0
 
@@ -19,6 +20,7 @@ var projectile_scene = preload("res://Scenes/Projectile.tscn")
 @export var cur_hp : int = 100
 @export var max_hp : int = 100
 @export var score : int = 0
+@export var lives_remaining : int = 3
 var last_attacker_id : int
 var is_alive : bool = true
 
@@ -76,6 +78,13 @@ func _ready():
 	# Set the ship sprite when ready
 	_set_ship_sprite()
 	
+	# Apply speed multiplier from game config
+	_apply_speed_multiplier()
+	
+	# Set initial lives from game config
+	if game_manager:
+		lives_remaining = game_manager.player_lives
+	
 	# do we control this player?
 	if $InputSynchronizer.is_multiplayer_authority():
 		game_manager.local_player = self
@@ -85,6 +94,11 @@ func _ready():
 	
 	if multiplayer.is_server():
 		position = game_manager.get_random_position()
+
+func _apply_speed_multiplier():
+	"""Apply the speed multiplier from game configuration"""
+	if game_manager:
+		max_speed = base_max_speed * game_manager.speed_multiplier
 
 @rpc("any_peer", "call_local", "reliable")
 func set_player_name (new_name : String):
@@ -168,10 +182,18 @@ func take_damage_clients ():
 	sprite.modulate = Color(1, 1, 1)
 
 func die ():
+	lives_remaining -= 1
 	is_alive = false
 	position = Vector2(0, 9999)
-	respawn_timer.start(2)
-	game_manager.on_player_die(player_id, last_attacker_id)
+	
+	# Check if player has lives remaining
+	if lives_remaining > 0:
+		respawn_timer.start(2)
+		game_manager.on_player_die(player_id, last_attacker_id)
+	else:
+		# Player is eliminated
+		game_manager.on_player_eliminated(player_id, last_attacker_id)
+	
 	die_clients.rpc()
 
 # called on ALL clients when player dies
@@ -184,12 +206,14 @@ func die_clients ():
 	audio_player.play()
 
 func respawn ():
-	is_alive = true
-	cur_hp = max_hp
-	throttle = 0.0
-	last_attacker_id = 0
-	position = game_manager.get_random_position()
-	rotation = 0
+	# Only respawn if player has lives remaining
+	if lives_remaining > 0:
+		is_alive = true
+		cur_hp = max_hp
+		throttle = 0.0
+		last_attacker_id = 0
+		position = game_manager.get_random_position()
+		rotation = 0
 
 func _manage_weapon_heat (delta):
 	if cur_weapon_heat < max_weapon_heat:
