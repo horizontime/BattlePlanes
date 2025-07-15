@@ -745,14 +745,17 @@ script = ExtResource("89_5bpla")
 fill_color = SubResource("Gradient_jwwkl")
 
 [node name="CooldownLabel" type="Label" parent="."]
-z_index = 99
-offset_left = -210.0
-offset_top = -225.0
-offset_right = -193.0
-offset_bottom = -210.0
+z_index = 100
+offset_left = -177.0
+offset_top = -190.0
+offset_right = -198.0
+offset_bottom = -140.0
+rotation = 1.5708
+theme_override_colors/font_color = Color(1, 1, 1, 0.9)
 theme_override_font_sizes/font_size = 10
 text = "Cooldown"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ScoreUI" type="Panel" parent="."]
 z_index = 99
