@@ -4,7 +4,6 @@ var players : Array[Player]
 var local_player : Player
 
 # Game configuration settings
-var score_to_win : int = 3
 var player_lives : int = 3
 var max_players : int = 4
 var speed_multiplier : float = 1.0
@@ -81,19 +80,36 @@ func _time_limit_reached():
 	"""Handle when time limit is reached"""
 	game_timer.stop()
 	
-	# Find player with highest score
+	# Find player(s) with highest score
 	var highest_score = -1
-	var winner: Player = null
+	var winners: Array[Player] = []
 	
+	# Get all players that are still alive (have lives remaining)
+	var alive_players = []
 	for player in players:
+		if player.lives_remaining > 0:
+			alive_players.append(player)
+	
+	# Find highest score among alive players
+	for player in alive_players:
 		if player.score > highest_score:
 			highest_score = player.score
-			winner = player
+			winners = [player]
+		elif player.score == highest_score:
+			winners.append(player)
 	
-	if winner:
-		end_game_clients.rpc(winner.player_name + " (Time Limit)")
+	# Handle different scenarios
+	if winners.size() == 0:
+		end_game_clients.rpc("Time Limit Reached - No Winner")
+	elif winners.size() == 1:
+		end_game_clients.rpc(winners[0].player_name + " (Most Kills)")
 	else:
-		end_game_clients.rpc("Time Limit Reached")
+		# Multiple winners - tie
+		var winner_names = []
+		for winner in winners:
+			winner_names.append(winner.player_name)
+		var tie_text = " & ".join(winner_names) + " (Tie - %d kills)" % highest_score
+		end_game_clients.rpc(tie_text)
 
 func _check_for_new_players():
 	# Create health bars for any players that don't have one yet
@@ -136,8 +152,7 @@ func on_player_die (player_id : int, attacker_id : int):
 	
 	attacker.increase_score(1)
 	
-	if attacker.score >= score_to_win:
-		end_game_clients.rpc(attacker.player_name)
+	# No automatic win based on kill count - only check for last player standing
 
 # called when a player is eliminated (no lives remaining)
 func on_player_eliminated (player_id : int, attacker_id : int):
@@ -146,7 +161,7 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	
 	attacker.increase_score(1)
 	
-	print("Player %s eliminated! (%d lives remaining: %d)" % [player.player_name, player.player_name, player.lives_remaining])
+	print("Player %s eliminated! (Lives remaining: %d)" % [player.player_name, player.lives_remaining])
 	
 	# Check if only one player remains alive
 	var alive_players = []
@@ -154,12 +169,13 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 		if p.lives_remaining > 0:
 			alive_players.append(p)
 	
-	if alive_players.size() <= 1 and alive_players.size() > 0:
-		# Last player standing wins
-		end_game_clients.rpc(alive_players[0].player_name + " (Last Standing)")
-	elif attacker.score >= score_to_win:
-		# Attacker reached score limit
-		end_game_clients.rpc(attacker.player_name)
+	if alive_players.size() <= 1:
+		if alive_players.size() == 1:
+			# Last player standing wins
+			end_game_clients.rpc(alive_players[0].player_name + " (Last Standing)")
+		else:
+			# Everyone eliminated (shouldn't happen but just in case)
+			end_game_clients.rpc("No Survivors")
 
 # finds the player belonging to the player_id
 # and returns them
@@ -194,7 +210,7 @@ func reset_game_clients ():
 @rpc("authority", "call_local", "reliable")
 func end_game_clients (winner_name : String):
 	end_screen.visible = true
-	end_screen_winner_text.text = str(winner_name, " has won!")
+	end_screen_winner_text.text = str(winner_name, " wins!")
 	end_screen_button.visible = multiplayer.is_server()
 
 func _on_play_again_button_pressed():

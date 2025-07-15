@@ -1,4 +1,4 @@
-[gd_scene load_steps=186 format=4 uid="uid://cdd5shshoe2tf"]
+[gd_scene load_steps=185 format=4 uid="uid://cdd5shshoe2tf"]
 
 [ext_resource type="Texture2D" uid="uid://c1fkjabwauqop" path="res://Sprites/Tiles/tile_0036.png" id="1_0vpkh"]
 [ext_resource type="Script" uid="uid://bpkhf0jptx5wh" path="res://Scripts/GameManager.gd" id="1_ugb21"]
@@ -532,10 +532,6 @@ bg_color = Color(0.310647, 0.698896, 0.322231, 1)
 offsets = PackedFloat32Array(0, 0.653386, 1)
 colors = PackedColorArray(0, 0.989364, 0.451523, 1, 0.928214, 0.836702, 0, 1, 0.925564, 0.25809, 0.205469, 1)
 
-[sub_resource type="LabelSettings" id="LabelSettings_it7pd"]
-line_spacing = -3.0
-font_size = 14
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mal6l"]
 bg_color = Color(0.280801, 0.546035, 0.344958, 1)
 
@@ -748,6 +744,16 @@ show_percentage = false
 script = ExtResource("89_5bpla")
 fill_color = SubResource("Gradient_jwwkl")
 
+[node name="CooldownLabel" type="Label" parent="."]
+z_index = 99
+offset_left = -210.0
+offset_top = -225.0
+offset_right = -193.0
+offset_bottom = -210.0
+theme_override_font_sizes/font_size = 10
+text = "Cooldown"
+horizontal_alignment = 1
+
 [node name="ScoreUI" type="Panel" parent="."]
 z_index = 99
 offset_left = -364.0
@@ -756,16 +762,42 @@ offset_right = -216.0
 offset_bottom = -125.0
 script = ExtResource("91_nr72a")
 
-[node name="PlayerScores" type="Label" parent="ScoreUI"]
-layout_mode = 0
+[node name="VBoxContainer" type="VBoxContainer" parent="ScoreUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 5.0
 offset_top = 3.0
-offset_right = 145.0
-offset_bottom = 80.0
-text = "PlayerName - 4
-PlayerName - 5
-PlayerName - 2"
-label_settings = SubResource("LabelSettings_it7pd")
+offset_right = -5.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="HBoxContainer" parent="ScoreUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="NameHeader" type="Label" parent="ScoreUI/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "Name"
+
+[node name="KillsHeader" type="Label" parent="ScoreUI/VBoxContainer/Header"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "Kills"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="ScoreUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="PlayerList" type="VBoxContainer" parent="ScoreUI/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="EndScreen" type="Panel" parent="."]
 visible = false
