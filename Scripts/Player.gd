@@ -22,6 +22,9 @@ var projectile_scene = preload("res://Scenes/Projectile.tscn")
 var last_attacker_id : int
 var is_alive : bool = true
 
+# Health bar reference
+var health_bar : HealthBar = null
+
 @onready var input = $InputSynchronizer
 @onready var shadow = $Shadow
 @onready var muzzle = $Muzzle
@@ -218,3 +221,12 @@ func _check_border ():
 
 func increase_score (amount : int):
 	score += amount
+
+# Health bar management functions
+func set_health_bar(bar: HealthBar):
+	health_bar = bar
+	if health_bar:
+		health_bar.set_target_player(self)
+
+func get_health_percentage() -> float:
+	return float(cur_hp) / float(max_hp) * 100.0
