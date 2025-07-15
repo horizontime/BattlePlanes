@@ -1,0 +1,107 @@
+---
+description: git commit comment
+alwaysApply: false
+---
+Git Commit Style Rule
+
+1. Commit Message Format
+
+	<type>(<scope>): <short message>
+
+
+- Type: Required. Describes the purpose of the commit (e.g., feat, fix, docs, etc.).
+- Scope: Optional. Specifies the area of the codebase affected (e.g., auth, api, ui, etc.).
+- Short Message: Required. A concise, imperative description of the change.
+
+---
+
+2. Types
+
+
+Use one of the following types to categorize your commit:
+
+
+Type	Description
+feat	A new feature
+fix	A bug fix
+docs	Documentation changes
+style	Code style changes (no functional impact)
+refactor	Code restructuring (no functional change)
+perf	Performance improvements
+test	Adding or updating tests
+build	Changes to build system or dependencies
+ci	Changes to CI configuration
+chore	Miscellaneous tasks (e.g., updating dependencies)
+revert	Reverting a previous commit
+
+---
+
+3. Scope
+
+- Use a single word or short phrase to describe the affected area of the codebase.
+- Examples: auth, api, ui, db, config, tests, etc.
+- If the scope is irrelevant, omit it.
+
+---
+
+4. Short Message
+
+- Write a concise, imperative sentence describing the change.
+- Use the present tense (e.g., "add" instead of "added").
+- Avoid punctuation at the end.
+- Example: feat(auth): add OAuth2 support
+
+---
+
+5. Body (Optional)
+
+- If the commit requires more explanation, add a body after the subject line.
+- Separate the subject and body with a blank line.
+- Use the body to:
+	- Explain why the change was made.
+	- Provide additional context or details.
+	- Reference related issues or tickets (e.g., Resolves #123).
+Example:
+
+
+	feat(auth): add OAuth2 support
+	
+	This commit adds OAuth2 support to the authentication module. It includes
+	token generation and validation logic.
+	Resolves #123
+
+
+---
+
+6. Breaking Changes
+
+- If the commit introduces a breaking change, include BREAKING CHANGE: in the body.
+- Describe the impact and required migration steps.
+Example:
+
+
+	feat(api): update response format
+	
+	BREAKING CHANGE: The API response format has been updated to include metadata.
+	Clients must update their parsing logic to handle the new format.
+
+
+---
+
+7. Examples
+
+
+Here are some examples of well-structured commit messages:
+
+
+- Feature: feat(ui): add dark mode toggle
+- Bug Fix: fix(api): resolve timeout issue
+- Documentation: docs: update installation guide
+- Refactor: refactor(db): optimize query performance
+- Test: test: add unit tests for login functionality
+- Chore: chore: update dependencies
+- Breaking Change:
+
+	feat(api): update response format
+	
+	BREAKING CHANGE: The API response format has been updated to include metadata.
