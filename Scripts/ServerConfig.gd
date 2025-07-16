@@ -2,28 +2,28 @@ extends Control
 class_name ServerConfig
 
 # UI References - Custom Tab
-@onready var lives_spinbox = $VBoxContainer/TabContainer/Custom/CustomVBox/LivesContainer/LivesSpinBox
-@onready var max_players_spinbox = $VBoxContainer/TabContainer/Custom/CustomVBox/MaxPlayersContainer/MaxPlayersSpinBox
-@onready var speed_slider = $VBoxContainer/TabContainer/Custom/CustomVBox/SpeedContainer/SpeedSlider
-@onready var speed_value_label = $VBoxContainer/TabContainer/Custom/CustomVBox/SpeedContainer/SpeedValueLabel
-@onready var damage_slider = $VBoxContainer/TabContainer/Custom/CustomVBox/DamageContainer/DamageSlider
-@onready var damage_value_label = $VBoxContainer/TabContainer/Custom/CustomVBox/DamageContainer/DamageValueLabel
-@onready var time_limit_checkbox = $VBoxContainer/TabContainer/Custom/CustomVBox/TimeLimitContainer/TimeLimitCheckBox
-@onready var time_limit_spinbox = $VBoxContainer/TabContainer/Custom/CustomVBox/TimeLimitContainer/TimeLimitSpinBox
-@onready var hearts_checkbox = $VBoxContainer/TabContainer/Custom/CustomVBox/HeartsContainer/HeartsCheckBox
-@onready var clouds_checkbox = $VBoxContainer/TabContainer/Custom/CustomVBox/CloudsContainer/CloudsCheckBox
+@onready var lives_spinbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/LivesContainer/LivesSpinBox
+@onready var max_players_spinbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/MaxPlayersContainer/MaxPlayersSpinBox
+@onready var speed_slider = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/SpeedContainer/SpeedSlider
+@onready var speed_value_label = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/SpeedContainer/SpeedValueLabel
+@onready var damage_slider = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/DamageContainer/DamageSlider
+@onready var damage_value_label = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/DamageContainer/DamageValueLabel
+@onready var time_limit_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/TimeLimitContainer/TimeLimitCheckBox
+@onready var time_limit_spinbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/TimeLimitContainer/TimeLimitSpinBox
+@onready var hearts_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/HeartsContainer/HeartsCheckBox
+@onready var clouds_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/CloudsContainer/CloudsCheckBox
 
 # UI References - Free-for-all Tab
-@onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/FFAVBox/ClassicDeathmatch"
-@onready var timed_combat_btn = $"VBoxContainer/TabContainer/Free-for-all/FFAVBox/TimedCombat"
-@onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/FFAVBox/LastPlaneStanding"
-@onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/FFAVBox/QuickMatch"
+@onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox/ClassicDeathmatch"
+@onready var timed_combat_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox/TimedCombat"
+@onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox/LastPlaneStanding"
+@onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox/QuickMatch"
 
 # UI References - Team based Tab
-@onready var team_deathmatch_btn = $VBoxContainer/TabContainer/TeamBased/TeamVBox/TeamDeathmatch
-@onready var capture_flag_btn = $VBoxContainer/TabContainer/TeamBased/TeamVBox/CaptureTheFlag
-@onready var domination_btn = $VBoxContainer/TabContainer/TeamBased/TeamVBox/Domination
-@onready var squadron_btn = $VBoxContainer/TabContainer/TeamBased/TeamVBox/Squadron
+@onready var team_deathmatch_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox/TeamDeathmatch
+@onready var capture_flag_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox/CaptureTheFlag
+@onready var domination_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox/Domination
+@onready var squadron_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox/Squadron
 
 # UI References - Common
 @onready var tab_container = $VBoxContainer/TabContainer
