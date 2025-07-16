@@ -19,11 +19,23 @@ class_name ServerConfig
 @onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStanding"
 @onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatch"
 
+# UI References - Free-for-all Descriptions
+@onready var classic_deathmatch_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc"
+@onready var timed_combat_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombatDesc"
+@onready var last_plane_standing_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc"
+@onready var quick_match_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc"
+
 # UI References - Team Modes Tab
 @onready var team_deathmatch_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch"
 @onready var capture_flag_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlag"
 @onready var domination_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/Domination"
 @onready var squadron_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/Squadron"
+
+# UI References - Team Modes Descriptions
+@onready var team_deathmatch_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc"
+@onready var capture_flag_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc"
+@onready var domination_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/DominationDesc"
+@onready var squadron_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/SquadronDesc"
 
 # UI References - Common
 @onready var tab_container = $VBoxContainer/TabContainer
@@ -131,6 +143,21 @@ var team_presets = {
 	}
 }
 
+# Game mode descriptions
+var ffa_descriptions = {
+	"Classic Deathmatch": "Standard dogfight action\n• 3 Lives per player\n• Up to 6 players\n• No time limit\n• Classic combat experience",
+	"Timed Combat": "Fast-paced combat with time limit\n• 5 Lives per player\n• Up to 4 players\n• 10 minute time limit\n• 1.2x speed boost\n• Heart powerups enabled",
+	"Last Plane Standing": "Elimination mode - one life only\n• 1 Life per player\n• Up to 8 players\n• No time limit\n• 0.8x speed, 1.5x damage\n• No clouds for better visibility",
+	"Quick Match": "Quick action for casual play\n• 2 Lives per player\n• Up to 4 players\n• 5 minute time limit\n• 1.5x speed, 1.2x damage\n• Heart powerups enabled"
+}
+
+var team_descriptions = {
+	"Team Deathmatch": "Team vs team combat\n• 3 Lives per player\n• Up to 6 players\n• 15 minute time limit\n• Heart powerups enabled\n• Balanced team warfare",
+	"Capture The Flag": "Capture and defend objectives\n• 5 Lives per player\n• Up to 8 players\n• 20 minute time limit\n• 1.2x speed, 0.8x damage\n• Extended tactical gameplay",
+	"Domination": "Control zones for victory\n• 4 Lives per player\n• Up to 6 players\n• 12 minute time limit\n• Heart powerups enabled\n• Strategic zone control",
+	"Squadron vs Squadron": "Elite squadron battles\n• 2 Lives per player\n• Up to 8 players\n• 18 minute time limit\n• 0.9x speed, 1.3x damage\n• No clouds, intense combat"
+}
+
 func _ready():
 	# Set default values
 	lives_spinbox.value = player_lives
@@ -216,6 +243,12 @@ func _on_game_mode_selected(mode_name: String, mode_type: String):
 	selected_game_mode = mode_name
 	game_mode_type = mode_type
 	
+	# Hide all descriptions first
+	_hide_all_descriptions()
+	
+	# Show the selected description
+	_show_description(mode_name, mode_type)
+	
 	# Apply preset configuration
 	var preset_config
 	if mode_type == "ffa":
@@ -227,7 +260,58 @@ func _on_game_mode_selected(mode_name: String, mode_type: String):
 	_update_start_button_state()
 	print("Selected game mode: ", mode_name, " (", mode_type, ")")
 
+func _hide_all_descriptions():
+	# Hide FFA descriptions
+	classic_deathmatch_desc.visible = false
+	timed_combat_desc.visible = false
+	last_plane_standing_desc.visible = false
+	quick_match_desc.visible = false
+	
+	# Hide Team descriptions
+	team_deathmatch_desc.visible = false
+	capture_flag_desc.visible = false
+	domination_desc.visible = false
+	squadron_desc.visible = false
+
+func _show_description(mode_name: String, mode_type: String):
+	var description_text = ""
+	var description_container = null
+	
+	# Get description text and container
+	if mode_type == "ffa":
+		description_text = ffa_descriptions[mode_name]
+		match mode_name:
+			"Classic Deathmatch":
+				description_container = classic_deathmatch_desc
+			"Timed Combat":
+				description_container = timed_combat_desc
+			"Last Plane Standing":
+				description_container = last_plane_standing_desc
+			"Quick Match":
+				description_container = quick_match_desc
+	else:  # team mode
+		description_text = team_descriptions[mode_name]
+		match mode_name:
+			"Team Deathmatch":
+				description_container = team_deathmatch_desc
+			"Capture The Flag":
+				description_container = capture_flag_desc
+			"Domination":
+				description_container = domination_desc
+			"Squadron vs Squadron":
+				description_container = squadron_desc
+	
+	# Show description
+	if description_container:
+		var desc_label = description_container.get_node("DescPanel/DescLabel")
+		if desc_label:
+			desc_label.text = description_text
+			description_container.visible = true
+
 func _on_tab_changed(tab: int):
+	# Hide all descriptions when switching tabs
+	_hide_all_descriptions()
+	
 	# Clear game mode selection when switching tabs
 	if tab == 2:  # Custom tab
 		_mark_as_custom()
