@@ -86,6 +86,12 @@ func _on_player_connected (id : int):
 	player.player_id = id
 	spawned_nodes.add_child(player, true)
 
+	# If a heart currently exists, instruct server to send it to the new peer so they can see it
+	if multiplayer.is_server():
+		var game_manager = get_tree().current_scene.get_node("GameManager")
+		if game_manager and game_manager.current_heart != null and is_instance_valid(game_manager.current_heart):
+			game_manager._spawn_heart_for_peer(game_manager.current_heart.position, id)
+
 # called on the SERVER when a player leaves
 # destroy their plane object
 func _on_player_disconnected (id : int):
