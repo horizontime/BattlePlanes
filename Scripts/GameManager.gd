@@ -108,7 +108,7 @@ func _time_limit_reached():
 		var winner_names = []
 		for winner in winners:
 			winner_names.append(winner.player_name)
-		var tie_text = " & ".join(winner_names) + " (Tie - %d kills)" % highest_score
+		var tie_text = "Tie Game!\n" + " & ".join(winner_names) + " tie for " + _get_place_suffix(highest_score)
 		end_game_clients.rpc(tie_text)
 
 func _check_for_new_players():
@@ -220,3 +220,16 @@ func end_game_clients (winner_name : String):
 
 func _on_play_again_button_pressed():
 	reset_game()
+
+func _get_place_suffix(score: int) -> String:
+	"""Convert a score to a place description (first, second, third, etc.)"""
+	if score == 0:
+		return "last place"
+	elif score == 1:
+		return "first"
+	elif score == 2:
+		return "second"
+	elif score == 3:
+		return "third"
+	else:
+		return str(score) + "th place"
