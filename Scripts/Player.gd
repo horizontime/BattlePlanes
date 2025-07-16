@@ -11,6 +11,7 @@ class_name Player
 @export var base_max_speed : float = 150.0  # Base speed before multiplier
 @export var max_speed : float = 150.0  # Actual speed with multiplier applied
 @export var turn_rate : float = 2.5
+@export var deceleration_rate : float = 2.0  # How quickly the plane slows down when not accelerating
 var throttle : float = 0.0
 
 @export var shoot_rate : float = 0.1
@@ -122,7 +123,14 @@ func _physics_process (delta):
 func _move (delta):
 	rotate(input.turn_input * turn_rate * delta)
 	
-	throttle += input.throttle_input * delta
+	# Handle throttle with acceleration and deceleration
+	if input.throttle_input > 0:
+		# Accelerating forward
+		throttle += input.throttle_input * delta
+	else:
+		# Decelerating when no forward input (or when pressing reverse)
+		throttle -= deceleration_rate * delta
+	
 	throttle = clamp(throttle, 0.0, 1.0)
 	
 	velocity = -transform.y * throttle * max_speed
