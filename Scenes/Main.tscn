@@ -1,4 +1,4 @@
-[gd_scene load_steps=185 format=4 uid="uid://cdd5shshoe2tf"]
+[gd_scene load_steps=186 format=4 uid="uid://cdd5shshoe2tf"]
 
 [ext_resource type="Texture2D" uid="uid://c1fkjabwauqop" path="res://Sprites/Tiles/tile_0036.png" id="1_0vpkh"]
 [ext_resource type="Script" uid="uid://bpkhf0jptx5wh" path="res://Scripts/GameManager.gd" id="1_ugb21"]
@@ -532,6 +532,18 @@ bg_color = Color(0.310647, 0.698896, 0.322231, 1)
 offsets = PackedFloat32Array(0, 0.653386, 1)
 colors = PackedColorArray(0, 0.989364, 0.451523, 1, 0.928214, 0.836702, 0, 1, 0.925564, 0.25809, 0.205469, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_timer"]
+bg_color = Color(0.1, 0.1, 0.1, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.6, 0.6, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mal6l"]
 bg_color = Color(0.280801, 0.546035, 0.344958, 1)
 
@@ -706,7 +718,7 @@ offset_bottom = 179.0
 
 [node name="StartServerButton" type="Button" parent="Network/NetworkUI/VBoxContainer"]
 layout_mode = 2
-text = "Start Server"
+text = "Configure Server"
 
 [node name="JoinServerButton" type="Button" parent="Network/NetworkUI/VBoxContainer"]
 layout_mode = 2
@@ -754,6 +766,28 @@ rotation = 1.5708
 theme_override_colors/font_color = Color(1, 1, 1, 0.9)
 theme_override_font_sizes/font_size = 10
 text = "Cooldown"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimerUI" type="Panel" parent="."]
+visible = false
+z_index = 99
+offset_left = -60.0
+offset_top = -208.0
+offset_right = 60.0
+offset_bottom = -175.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_timer")
+
+[node name="TimerLabel" type="Label" parent="TimerUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "5:00"
 horizontal_alignment = 1
 vertical_alignment = 1
 

@@ -31,6 +31,10 @@ var health_bars : Array[HealthBar] = []
 @onready var end_screen_winner_text = $"../EndScreen/WinText"
 @onready var end_screen_button = $"../EndScreen/PlayAgainButton"
 
+# timer UI
+@onready var timer_ui = $"../TimerUI"
+@onready var timer_label = $"../TimerUI/TimerLabel"
+
 func _ready():
 	# Create a timer to periodically check for new players and create health bars
 	var timer = Timer.new()
@@ -58,14 +62,46 @@ func apply_server_config(config: Dictionary):
 	if has_time_limit:
 		time_limit_seconds = time_limit_minutes * 60.0
 		game_timer.start()
+		_show_timer_ui()
 		print("Game started with %d minute time limit" % time_limit_minutes)
+	else:
+		_hide_timer_ui()
 	
 	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx" % [player_lives, max_players, speed_multiplier, damage_multiplier])
+
+func _show_timer_ui():
+	"""Show the countdown timer UI"""
+	if timer_ui:
+		timer_ui.visible = true
+		_update_timer_display()
+
+func _hide_timer_ui():
+	"""Hide the countdown timer UI"""
+	if timer_ui:
+		timer_ui.visible = false
+
+func _update_timer_display():
+	"""Update the timer display with current time remaining"""
+	if not timer_label or not has_time_limit:
+		return
+	
+	var minutes = int(time_limit_seconds) / 60
+	var seconds = int(time_limit_seconds) % 60
+	timer_label.text = "%d:%02d" % [minutes, seconds]
+	
+	# Change color based on time remaining
+	if time_limit_seconds <= 10:
+		timer_label.add_theme_color_override("font_color", Color.RED)
+	elif time_limit_seconds <= 60:
+		timer_label.add_theme_color_override("font_color", Color.YELLOW)
+	else:
+		timer_label.add_theme_color_override("font_color", Color.WHITE)
 
 func _on_game_timer_timeout():
 	"""Handle time limit countdown"""
 	if has_time_limit and time_limit_seconds > 0:
 		time_limit_seconds -= 1.0
+		_update_timer_display()
 		
 		# Warn players at certain intervals
 		if time_limit_seconds == 60.0:  # 1 minute left
@@ -79,6 +115,7 @@ func _on_game_timer_timeout():
 func _time_limit_reached():
 	"""Handle when time limit is reached"""
 	game_timer.stop()
+	_hide_timer_ui()
 	
 	# Find player(s) with highest score
 	var highest_score = -1
@@ -199,6 +236,9 @@ func reset_game():
 	if has_time_limit:
 		time_limit_seconds = time_limit_minutes * 60.0
 		game_timer.start()
+		_show_timer_ui()
+	else:
+		_hide_timer_ui()
 	
 	reset_game_clients.rpc()
 

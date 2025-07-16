@@ -19,7 +19,7 @@ var max_players: int = 4
 var speed_multiplier: float = 1.0
 var damage_multiplier: float = 1.0
 var has_time_limit: bool = false
-var time_limit_minutes: int = 10
+var time_limit_minutes: int = 5
 
 # Signals
 signal server_config_confirmed(config: Dictionary)
