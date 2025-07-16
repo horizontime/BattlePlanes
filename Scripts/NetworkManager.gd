@@ -22,8 +22,48 @@ var spawn_y_range : float = 200
 func _ready():
 	pass
 
+# Validate if the port input is valid
+func _is_valid_port() -> bool:
+	var port_text = port_input.text.strip_edges()
+	
+	# Check if port input is empty
+	if port_text.is_empty():
+		_show_port_error("Port is required! Please enter a port number.")
+		return false
+	
+	# Check if port is a valid number
+	if not port_text.is_valid_int():
+		_show_port_error("Invalid port! Please enter a valid number.")
+		return false
+	
+	var port_number = port_text.to_int()
+	
+	# Check if port is in valid range (1024-65535 for user applications)
+	if port_number < 1024 or port_number > 65535:
+		_show_port_error("Port must be between 1024 and 65535!")
+		return false
+	
+	return true
+
+# Show port validation error message
+func _show_port_error(message: String):
+	print("Port Error: " + message)
+	# Highlight the port input to draw attention
+	port_input.modulate = Color.RED
+	port_input.placeholder_text = message
+	port_input.text = ""
+	
+	# Reset the highlight after 3 seconds
+	await get_tree().create_timer(3.0).timeout
+	port_input.modulate = Color.WHITE
+	port_input.placeholder_text = "Port..."
+
 # show server configuration menu instead of immediately starting
 func start_host ():
+	# Validate port before proceeding
+	if not _is_valid_port():
+		return
+	
 	# Create and show server configuration UI
 	if server_config_ui == null:
 		server_config_ui = server_config_scene.instantiate()
@@ -68,6 +108,10 @@ func _actually_start_server():
 
 # join a multiplayer game
 func start_client ():
+	# Validate port before proceeding
+	if not _is_valid_port():
+		return
+	
 	var peer = ENetMultiplayerPeer.new()
 	peer.create_client(ip_input.text, int(port_input.text))
 	multiplayer.multiplayer_peer = peer
