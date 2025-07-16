@@ -44,6 +44,9 @@ func _on_body_entered(body):
 		# Notify all clients about the collection
 		_on_heart_collected.rpc(body.player_name, body.lives_remaining)
 		
+		# Tell all clients to remove their local heart
+		_remove_heart_on_clients.rpc()
+		
 		# Tell the game manager a heart was collected
 		if game_manager:
 			game_manager._on_heart_collected()
@@ -63,4 +66,10 @@ func _on_heart_collected(player_name: String, new_life_count: int):
 	if sprite:
 		var feedback_tween = create_tween()
 		feedback_tween.tween_property(sprite, "scale", Vector2(2.0, 2.0), 0.2)
-		feedback_tween.tween_property(sprite, "modulate:a", 0.0, 0.2) 
+		feedback_tween.tween_property(sprite, "modulate:a", 0.0, 0.2)
+
+@rpc("authority", "call_local", "reliable")
+func _remove_heart_on_clients():
+	# Remove the heart on clients
+	if not multiplayer.is_server():
+		queue_free() 

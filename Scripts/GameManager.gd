@@ -306,23 +306,39 @@ func _spawn_heart():
 	"""Spawn a heart powerup at a random location"""
 	# Only spawn on server and if hearts are enabled
 	if not multiplayer.is_server() or not hearts_enabled:
+		print("[Heart] _spawn_heart called but not server or hearts disabled")
 		return
 	
 	# Don't spawn if there's already a heart on the map
 	if current_heart != null and is_instance_valid(current_heart):
+		print("[Heart] _spawn_heart called but heart already exists")
 		return
+	
+	print("[Heart] Server spawning new heart...")
 	
 	# Create and position the heart (server side)
 	current_heart = heart_scene.instantiate()
-	current_heart.position = get_random_position()
+	current_heart.position = _get_random_heart_position()
 	
 	# Add to the spawned nodes (networked)
 	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(current_heart, true)
 
 	# Inform all clients to spawn a matching heart locally
+	print("[Heart] Calling RPC to spawn heart on clients at position: " + str(current_heart.position))
 	rpc("_spawn_heart_clients", current_heart.position)
 	
 	print("Heart spawned at position: " + str(current_heart.position))
+
+# ------------------------------------------------------------
+# HELPER: Random heart spawn with edge padding
+# ------------------------------------------------------------
+
+func _get_random_heart_position() -> Vector2:
+	# Ensure the heart doesn't spawn closer than 40 px to the window edges
+	var padding := 40.0
+	var x := randf_range(min_x + padding, max_x - padding)
+	var y := randf_range(min_y + padding, max_y - padding)
+	return Vector2(x, y)
 
 # ------------------------------------------------------------
 # CLIENT-SIDE HEART SPAWNING
@@ -331,21 +347,26 @@ func _spawn_heart():
 # Creates a heart on non-server peers so everyone can see it.
 # We mark it call_local so that the function executes immediately
 # on the receiving peer without a round-trip back to the server.
-# The server ignores this call (it already spawned its instance).
-@rpc("any_peer", "call_local", "reliable")
+@rpc("authority", "call_local", "reliable")
 func _spawn_heart_clients(position: Vector2):
+	print("[Heart] _spawn_heart_clients called with position: " + str(position))
+	
 	# Avoid duplicating the heart on the server
 	if multiplayer.is_server():
+		print("[Heart] Client spawn ignored on server")
 		return
 
 	# Safety: ensure we don't already have a heart
 	for child in get_tree().get_current_scene().get_node("Network/SpawnedNodes").get_children():
 		if child is Heart:
+			print("[Heart] Client already has a heart, skipping spawn")
 			return
 
+	print("[Heart] Client spawning heart at position: " + str(position))
 	var heart = heart_scene.instantiate()
 	heart.position = position
 	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(heart)
+	print("[Heart] Client heart spawned successfully")
 
 # Send heart to a single newly-connected peer (called by NetworkManager)
 @rpc("authority", "reliable")
