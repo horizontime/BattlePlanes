@@ -172,7 +172,8 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	if alive_players.size() <= 1:
 		if alive_players.size() == 1:
 			# Last player standing wins
-			end_game_clients.rpc(alive_players[0].player_name + " (Last Standing)")
+			var winner_message = "One player remains.\n" + alive_players[0].player_name + " wins!"
+			end_game_clients.rpc(winner_message)
 		else:
 			# Everyone eliminated (shouldn't happen but just in case)
 			end_game_clients.rpc("No Survivors")
@@ -210,7 +211,11 @@ func reset_game_clients ():
 @rpc("authority", "call_local", "reliable")
 func end_game_clients (winner_name : String):
 	end_screen.visible = true
-	end_screen_winner_text.text = str(winner_name, " wins!")
+	# Check if the message already contains "wins!" to avoid duplication
+	if winner_name.contains("wins!"):
+		end_screen_winner_text.text = winner_name
+	else:
+		end_screen_winner_text.text = str(winner_name, " wins!")
 	end_screen_button.visible = multiplayer.is_server()
 
 func _on_play_again_button_pressed():
