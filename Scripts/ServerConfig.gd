@@ -142,6 +142,9 @@ func _ready():
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
 	
+	# Configure game mode buttons for single-click interaction
+	_configure_game_mode_buttons()
+	
 	# Connect signals - Custom tab
 	lives_spinbox.value_changed.connect(_on_lives_changed)
 	max_players_spinbox.value_changed.connect(_on_max_players_changed)
@@ -172,6 +175,7 @@ func _ready():
 	# Update labels
 	_update_labels()
 	_update_time_limit_visibility()
+	_update_start_button_state()
 
 func _on_lives_changed(value: float):
 	player_lives = int(value)
@@ -220,12 +224,21 @@ func _on_game_mode_selected(mode_name: String, mode_type: String):
 		preset_config = team_presets[mode_name]
 	
 	_apply_preset_config(preset_config)
+	_update_start_button_state()
 	print("Selected game mode: ", mode_name, " (", mode_type, ")")
 
 func _on_tab_changed(tab: int):
 	# Clear game mode selection when switching tabs
 	if tab == 2:  # Custom tab
 		_mark_as_custom()
+	else:
+		# For FFA (tab 0) or Team (tab 1) tabs, clear the selection
+		selected_game_mode = ""
+		if tab == 0:
+			game_mode_type = "ffa"
+		elif tab == 1:
+			game_mode_type = "team"
+	_update_start_button_state()
 
 func _apply_preset_config(config: Dictionary):
 	player_lives = config.player_lives
@@ -249,6 +262,7 @@ func _apply_preset_config(config: Dictionary):
 	
 	_update_labels()
 	_update_time_limit_visibility()
+	_update_start_button_state()
 
 func _mark_as_custom():
 	selected_game_mode = ""
@@ -260,6 +274,27 @@ func _update_labels():
 
 func _update_time_limit_visibility():
 	time_limit_spinbox.visible = has_time_limit
+
+func _update_start_button_state():
+	var current_tab = tab_container.current_tab
+	var is_valid_config = false
+	
+	if current_tab == 2:  # Custom tab
+		is_valid_config = true
+	elif current_tab == 0:  # Free-for-all tab
+		if selected_game_mode != "" and selected_game_mode in ffa_presets:
+			is_valid_config = true
+	elif current_tab == 1:  # Team Modes tab
+		if selected_game_mode != "" and selected_game_mode in team_presets:
+			is_valid_config = true
+	
+	start_server_button.disabled = !is_valid_config
+	
+	# Prevent the button from being focusable when disabled to avoid white outline
+	if is_valid_config:
+		start_server_button.focus_mode = Control.FOCUS_ALL
+	else:
+		start_server_button.focus_mode = Control.FOCUS_NONE
 
 func _on_start_server_pressed():
 	var config = {
@@ -278,3 +313,24 @@ func _on_start_server_pressed():
 
 func _on_back_pressed():
 	back_to_main_menu.emit() 
+
+func _configure_game_mode_buttons():
+	# Configure FFA buttons
+	classic_deathmatch_btn.focus_mode = Control.FOCUS_ALL
+	classic_deathmatch_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	timed_combat_btn.focus_mode = Control.FOCUS_ALL
+	timed_combat_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	last_plane_standing_btn.focus_mode = Control.FOCUS_ALL
+	last_plane_standing_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	quick_match_btn.focus_mode = Control.FOCUS_ALL
+	quick_match_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# Configure Team buttons
+	team_deathmatch_btn.focus_mode = Control.FOCUS_ALL
+	team_deathmatch_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	capture_flag_btn.focus_mode = Control.FOCUS_ALL
+	capture_flag_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	domination_btn.focus_mode = Control.FOCUS_ALL
+	domination_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	squadron_btn.focus_mode = Control.FOCUS_ALL
+	squadron_btn.mouse_filter = Control.MOUSE_FILTER_STOP 
