@@ -10,6 +10,12 @@ var speed_multiplier : float = 1.0
 var damage_multiplier : float = 1.0
 var has_time_limit : bool = false
 var time_limit_minutes : int = 10
+var hearts_enabled : bool = false
+
+# Heart powerup management
+var heart_scene = preload("res://Scenes/Heart.tscn")
+var current_heart : Heart = null
+var heart_spawn_timer : Timer
 
 # Time limit tracking
 var time_limit_seconds : float = 0.0
@@ -48,6 +54,13 @@ func _ready():
 	game_timer.wait_time = 1.0  # Update every second
 	game_timer.timeout.connect(_on_game_timer_timeout)
 	add_child(game_timer)
+	
+	# Create heart spawn timer
+	heart_spawn_timer = Timer.new()
+	heart_spawn_timer.wait_time = 30.0  # 30 seconds
+	heart_spawn_timer.one_shot = true
+	heart_spawn_timer.timeout.connect(_spawn_heart)
+	add_child(heart_spawn_timer)
 
 func apply_server_config(config: Dictionary):
 	"""Apply server configuration settings to the game"""
@@ -57,6 +70,7 @@ func apply_server_config(config: Dictionary):
 	damage_multiplier = config.get("damage_multiplier", 1.0)
 	has_time_limit = config.get("has_time_limit", false)
 	time_limit_minutes = config.get("time_limit_minutes", 10)
+	hearts_enabled = config.get("hearts_enabled", false)
 	
 	# Start time limit if enabled
 	if has_time_limit:
@@ -67,7 +81,11 @@ func apply_server_config(config: Dictionary):
 	else:
 		_hide_timer_ui()
 	
-	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx" % [player_lives, max_players, speed_multiplier, damage_multiplier])
+	# Spawn initial heart if enabled
+	if hearts_enabled and multiplayer.is_server():
+		_spawn_heart()
+	
+	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled])
 
 func _show_timer_ui():
 	"""Show the countdown timer UI"""
@@ -240,6 +258,16 @@ func reset_game():
 	else:
 		_hide_timer_ui()
 	
+	# Reset heart spawning
+	if hearts_enabled and multiplayer.is_server():
+		# Remove any existing heart
+		if current_heart != null and is_instance_valid(current_heart):
+			current_heart.queue_free()
+		current_heart = null
+		heart_spawn_timer.stop()
+		# Spawn a new heart immediately
+		_spawn_heart()
+	
 	reset_game_clients.rpc()
 
 # called when the game resets on all CLIENTS
@@ -273,3 +301,36 @@ func _get_place_suffix(score: int) -> String:
 		return "third"
 	else:
 		return str(score) + "th place"
+
+func _spawn_heart():
+	"""Spawn a heart powerup at a random location"""
+	# Only spawn on server and if hearts are enabled
+	if not multiplayer.is_server() or not hearts_enabled:
+		return
+	
+	# Don't spawn if there's already a heart on the map
+	if current_heart != null and is_instance_valid(current_heart):
+		return
+	
+	# Create and position the heart
+	current_heart = heart_scene.instantiate()
+	current_heart.position = get_random_position()
+	
+	# Add to the spawned nodes (networked)
+	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(current_heart, true)
+	
+	print("Heart spawned at position: " + str(current_heart.position))
+
+func _on_heart_collected():
+	"""Called when a heart is collected by a player"""
+	# Only process on server
+	if not multiplayer.is_server():
+		return
+	
+	# Clear the current heart reference
+	current_heart = null
+	
+	# Start the timer to spawn a new heart in 30 seconds
+	if hearts_enabled:
+		heart_spawn_timer.start()
+		print("Next heart will spawn in 30 seconds")

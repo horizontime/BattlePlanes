@@ -10,6 +10,7 @@ class_name ServerConfig
 @onready var damage_value_label = $VBoxContainer/DamageContainer/DamageValueLabel
 @onready var time_limit_checkbox = $VBoxContainer/TimeLimitContainer/TimeLimitCheckBox
 @onready var time_limit_spinbox = $VBoxContainer/TimeLimitContainer/TimeLimitSpinBox
+@onready var hearts_checkbox = $VBoxContainer/HeartsContainer/HeartsCheckBox
 @onready var start_server_button = $VBoxContainer/ButtonContainer/StartServerButton
 @onready var back_button = $VBoxContainer/ButtonContainer/BackButton
 
@@ -20,6 +21,7 @@ var speed_multiplier: float = 1.0
 var damage_multiplier: float = 1.0
 var has_time_limit: bool = false
 var time_limit_minutes: int = 5
+var hearts_enabled: bool = false
 
 # Signals
 signal server_config_confirmed(config: Dictionary)
@@ -33,6 +35,7 @@ func _ready():
 	damage_slider.value = damage_multiplier
 	time_limit_checkbox.button_pressed = has_time_limit
 	time_limit_spinbox.value = time_limit_minutes
+	hearts_checkbox.button_pressed = hearts_enabled
 	
 	# Connect signals
 	lives_spinbox.value_changed.connect(_on_lives_changed)
@@ -41,6 +44,7 @@ func _ready():
 	damage_slider.value_changed.connect(_on_damage_changed)
 	time_limit_checkbox.toggled.connect(_on_time_limit_toggled)
 	time_limit_spinbox.value_changed.connect(_on_time_limit_value_changed)
+	hearts_checkbox.toggled.connect(_on_hearts_toggled)
 	start_server_button.pressed.connect(_on_start_server_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 	
@@ -69,6 +73,9 @@ func _on_time_limit_toggled(pressed: bool):
 func _on_time_limit_value_changed(value: float):
 	time_limit_minutes = int(value)
 
+func _on_hearts_toggled(pressed: bool):
+	hearts_enabled = pressed
+
 func _update_labels():
 	speed_value_label.text = "%.1fx" % speed_multiplier
 	damage_value_label.text = "%.1fx" % damage_multiplier
@@ -83,7 +90,8 @@ func _on_start_server_pressed():
 		"speed_multiplier": speed_multiplier,
 		"damage_multiplier": damage_multiplier,
 		"has_time_limit": has_time_limit,
-		"time_limit_minutes": time_limit_minutes
+		"time_limit_minutes": time_limit_minutes,
+		"hearts_enabled": hearts_enabled
 	}
 	server_config_confirmed.emit(config)
 

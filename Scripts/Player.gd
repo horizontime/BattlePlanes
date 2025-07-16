@@ -246,6 +246,11 @@ func _check_border ():
 func increase_score (amount : int):
 	score += amount
 
+func gain_extra_life():
+	"""Called when player gains an extra life from a heart"""
+	lives_remaining += 1
+	print(player_name + " gained an extra life! (Total: " + str(lives_remaining) + ")")
+
 # Health bar management functions
 func set_health_bar(bar: HealthBar):
 	health_bar = bar
