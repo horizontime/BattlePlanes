@@ -222,8 +222,10 @@ func remove_health_bar_for_player(player: Player):
 		player.health_bar = null
 
 func get_random_position () -> Vector2:
-	var x = randf_range(min_x, max_x)
-	var y = randf_range(min_y, max_y)
+	# Ensure players don't spawn closer than 40 px to the window edges
+	var padding := 40.0
+	var x = randf_range(min_x + padding, max_x - padding)
+	var y = randf_range(min_y + padding, max_y - padding)
 	return Vector2(x, y)
 
 # called when a player is killed (but still has lives)
