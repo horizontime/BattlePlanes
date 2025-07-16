@@ -100,24 +100,33 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="FFAVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="FFAVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 
-[node name="ClassicDeathmatch" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox"]
+[node name="ClassicDeathmatch" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
 layout_mode = 2
 text = "Classic Deathmatch"
 
-[node name="TimedCombat" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox"]
+[node name="TimedCombat" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
 layout_mode = 2
 text = "Timed Combat"
 
-[node name="LastPlaneStanding" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox"]
+[node name="LastPlaneStanding" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
 layout_mode = 2
 text = "Last Plane Standing"
 
-[node name="QuickMatch" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/FFAVBox"]
+[node name="QuickMatch" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
 layout_mode = 2
 text = "Quick Match"
 
@@ -131,24 +140,33 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="TeamVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="TeamVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 
-[node name="TeamDeathmatch" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox"]
+[node name="TeamDeathmatch" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Team Deathmatch"
 
-[node name="CaptureTheFlag" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox"]
+[node name="CaptureTheFlag" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Capture The Flag"
 
-[node name="Domination" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox"]
+[node name="Domination" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Domination"
 
-[node name="Squadron" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/TeamVBox"]
+[node name="Squadron" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Squadron vs Squadron"
 
@@ -162,51 +180,60 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CustomVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="CustomVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="LivesContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="LivesContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="LivesLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/LivesContainer"]
+[node name="LivesLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/LivesContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Player Lives:"
 
-[node name="LivesSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/LivesContainer"]
+[node name="LivesSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/LivesContainer"]
 layout_mode = 2
 min_value = 1.0
 max_value = 10.0
 value = 3.0
 
-[node name="MaxPlayersContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="MaxPlayersContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="MaxPlayersLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/MaxPlayersContainer"]
+[node name="MaxPlayersLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/MaxPlayersContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Max Players:"
 
-[node name="MaxPlayersSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/MaxPlayersContainer"]
+[node name="MaxPlayersSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/MaxPlayersContainer"]
 layout_mode = 2
 min_value = 2.0
 max_value = 8.0
 value = 4.0
 
-[node name="SpeedContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="SpeedContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="SpeedLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/SpeedContainer"]
+[node name="SpeedLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SpeedContainer"]
 layout_mode = 2
 size_flags_horizontal = 2
 text = "Speed:"
 
-[node name="SpeedSlider" type="HSlider" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/SpeedContainer"]
+[node name="SpeedSlider" type="HSlider" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SpeedContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 0.5
@@ -214,21 +241,21 @@ max_value = 3.0
 step = 0.1
 value = 1.0
 
-[node name="SpeedValueLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/SpeedContainer"]
+[node name="SpeedValueLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SpeedContainer"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "1.0x"
 
-[node name="DamageContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="DamageContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="DamageLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/DamageContainer"]
+[node name="DamageLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/DamageContainer"]
 layout_mode = 2
 size_flags_horizontal = 2
 text = "Damage:"
 
-[node name="DamageSlider" type="HSlider" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/DamageContainer"]
+[node name="DamageSlider" type="HSlider" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/DamageContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 0.5
@@ -236,39 +263,39 @@ max_value = 3.0
 step = 0.1
 value = 1.0
 
-[node name="DamageValueLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/DamageContainer"]
+[node name="DamageValueLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/DamageContainer"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "1.0x"
 
-[node name="TimeLimitContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="TimeLimitContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TimeLimitCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/TimeLimitContainer"]
+[node name="TimeLimitCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer"]
 layout_mode = 2
 text = "Time Limit (minutes):"
 
-[node name="TimeLimitSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/TimeLimitContainer"]
+[node name="TimeLimitSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer"]
 visible = false
 layout_mode = 2
 min_value = 1.0
 max_value = 60.0
 value = 5.0
 
-[node name="HeartsContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="HeartsContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="HeartsCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/HeartsContainer"]
+[node name="HeartsCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/HeartsContainer"]
 layout_mode = 2
 text = "Heart powerups"
 
-[node name="CloudsContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox"]
+[node name="CloudsContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="CloudsCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/CustomVBox/CloudsContainer"]
+[node name="CloudsCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/CloudsContainer"]
 layout_mode = 2
 button_pressed = true
 text = "Enable clouds"
