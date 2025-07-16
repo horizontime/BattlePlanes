@@ -127,15 +127,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Standard dogfight action"
 autowrap_mode = 3
@@ -154,15 +157,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombatDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombatDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombatDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Fast-paced combat with time limit"
 autowrap_mode = 3
@@ -181,15 +187,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Elimination mode - one life only"
 autowrap_mode = 3
@@ -208,15 +217,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Quick action for casual play"
 autowrap_mode = 3
@@ -259,15 +271,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Team vs team combat"
 autowrap_mode = 3
@@ -286,15 +301,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Capture and defend objectives"
 autowrap_mode = 3
@@ -313,15 +331,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/DominationDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/DominationDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/DominationDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Control zones for victory"
 autowrap_mode = 3
@@ -340,15 +361,18 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/SquadronDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/SquadronDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/SquadronDesc/DescPanel/DescMargin"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Elite squadron battles"
 autowrap_mode = 3

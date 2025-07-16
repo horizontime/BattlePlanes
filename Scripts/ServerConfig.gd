@@ -303,7 +303,7 @@ func _show_description(mode_name: String, mode_type: String):
 	
 	# Show description
 	if description_container:
-		var desc_label = description_container.get_node("DescPanel/DescLabel")
+		var desc_label = description_container.get_node("DescPanel/DescMargin/DescLabel")
 		if desc_label:
 			desc_label.text = description_text
 			description_container.visible = true
