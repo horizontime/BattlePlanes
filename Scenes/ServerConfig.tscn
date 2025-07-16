@@ -10,6 +10,27 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.4, 0.4, 0.4, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_unselected"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+content_margin_left = 0.0
+content_margin_right = 8.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_selected"]
+bg_color = Color(0.3, 0.3, 0.3, 1)
+content_margin_left = 0.0
+content_margin_right = 8.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_disabled"]
+bg_color = Color(0.15, 0.15, 0.15, 1)
+content_margin_left = 0.0
+content_margin_right = 8.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+
 [node name="ServerConfig" type="Control"]
 z_index = 99
 layout_mode = 3
@@ -56,6 +77,14 @@ layout_mode = 2
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/side_margin = 0
+theme_override_constants/top_margin = 0
+theme_override_constants/icon_separation = 0
+theme_override_constants/outline_size = 0
+theme_override_constants/h_separation = 0
+theme_override_styles/tab_unselected = SubResource("StyleBoxFlat_tab_unselected")
+theme_override_styles/tab_selected = SubResource("StyleBoxFlat_tab_selected")
+theme_override_styles/tab_disabled = SubResource("StyleBoxFlat_tab_disabled")
 
 [node name="Free-for-all" type="ScrollContainer" parent="VBoxContainer/TabContainer"]
 layout_mode = 2
@@ -65,8 +94,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer/TabContainer/Free-for-all/FFAVBox"]
-layout_mode = 2
 
 [node name="ClassicDeathmatch" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/FFAVBox"]
 layout_mode = 2
