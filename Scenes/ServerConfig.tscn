@@ -130,17 +130,17 @@ text = "Last Plane Standing"
 layout_mode = 2
 text = "Quick Match"
 
-[node name="TeamBased" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
+[node name="Team Modes" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
 layout_mode = 2
 
-[node name="HSeparator" type="HSeparator" parent="VBoxContainer/TabContainer/TeamBased"]
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/TabContainer/Team Modes"]
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/TabContainer/TeamBased"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/TabContainer/Team Modes"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -149,24 +149,24 @@ theme_override_constants/margin_right = 8
 theme_override_constants/margin_top = 0
 theme_override_constants/margin_bottom = 0
 
-[node name="TeamVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer"]
+[node name="TeamVBox" type="VBoxContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 
-[node name="TeamDeathmatch" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
+[node name="TeamDeathmatch" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Team Deathmatch"
 
-[node name="CaptureTheFlag" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
+[node name="CaptureTheFlag" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Capture The Flag"
 
-[node name="Domination" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
+[node name="Domination" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Domination"
 
-[node name="Squadron" type="Button" parent="VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox"]
+[node name="Squadron" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
 text = "Squadron vs Squadron"
 
@@ -240,6 +240,7 @@ min_value = 0.5
 max_value = 3.0
 step = 0.1
 value = 1.0
+scrollable = false
 
 [node name="SpeedValueLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SpeedContainer"]
 layout_mode = 2
@@ -262,6 +263,7 @@ min_value = 0.5
 max_value = 3.0
 step = 0.1
 value = 1.0
+scrollable = false
 
 [node name="DamageValueLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/DamageContainer"]
 layout_mode = 2

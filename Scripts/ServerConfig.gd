@@ -19,11 +19,11 @@ class_name ServerConfig
 @onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStanding"
 @onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatch"
 
-# UI References - Team based Tab
-@onready var team_deathmatch_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch
-@onready var capture_flag_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlag
-@onready var domination_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox/Domination
-@onready var squadron_btn = $VBoxContainer/TabContainer/TeamBased/ScrollContainer/MarginContainer/TeamVBox/Squadron
+# UI References - Team Modes Tab
+@onready var team_deathmatch_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch"
+@onready var capture_flag_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlag"
+@onready var domination_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/Domination"
+@onready var squadron_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/Squadron"
 
 # UI References - Common
 @onready var tab_container = $VBoxContainer/TabContainer
