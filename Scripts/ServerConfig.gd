@@ -11,6 +11,7 @@ class_name ServerConfig
 @onready var time_limit_checkbox = $VBoxContainer/TimeLimitContainer/TimeLimitCheckBox
 @onready var time_limit_spinbox = $VBoxContainer/TimeLimitContainer/TimeLimitSpinBox
 @onready var hearts_checkbox = $VBoxContainer/HeartsContainer/HeartsCheckBox
+@onready var clouds_checkbox = $VBoxContainer/CloudsContainer/CloudsCheckBox
 @onready var start_server_button = $VBoxContainer/ButtonContainer/StartServerButton
 @onready var back_button = $VBoxContainer/ButtonContainer/BackButton
 
@@ -22,6 +23,7 @@ var damage_multiplier: float = 1.0
 var has_time_limit: bool = false
 var time_limit_minutes: int = 5
 var hearts_enabled: bool = false
+var clouds_enabled: bool = true
 
 # Signals
 signal server_config_confirmed(config: Dictionary)
@@ -36,6 +38,7 @@ func _ready():
 	time_limit_checkbox.button_pressed = has_time_limit
 	time_limit_spinbox.value = time_limit_minutes
 	hearts_checkbox.button_pressed = hearts_enabled
+	clouds_checkbox.button_pressed = clouds_enabled
 	
 	# Connect signals
 	lives_spinbox.value_changed.connect(_on_lives_changed)
@@ -45,6 +48,7 @@ func _ready():
 	time_limit_checkbox.toggled.connect(_on_time_limit_toggled)
 	time_limit_spinbox.value_changed.connect(_on_time_limit_value_changed)
 	hearts_checkbox.toggled.connect(_on_hearts_toggled)
+	clouds_checkbox.toggled.connect(_on_clouds_toggled)
 	start_server_button.pressed.connect(_on_start_server_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 	
@@ -76,6 +80,9 @@ func _on_time_limit_value_changed(value: float):
 func _on_hearts_toggled(pressed: bool):
 	hearts_enabled = pressed
 
+func _on_clouds_toggled(pressed: bool):
+	clouds_enabled = pressed
+
 func _update_labels():
 	speed_value_label.text = "%.1fx" % speed_multiplier
 	damage_value_label.text = "%.1fx" % damage_multiplier
@@ -91,7 +98,8 @@ func _on_start_server_pressed():
 		"damage_multiplier": damage_multiplier,
 		"has_time_limit": has_time_limit,
 		"time_limit_minutes": time_limit_minutes,
-		"hearts_enabled": hearts_enabled
+		"hearts_enabled": hearts_enabled,
+		"clouds_enabled": clouds_enabled
 	}
 	server_config_confirmed.emit(config)
 

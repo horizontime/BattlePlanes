@@ -150,6 +150,15 @@ theme_override_constants/separation = 10
 layout_mode = 2
 text = "Heart powerups"
 
+[node name="CloudsContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CloudsCheckBox" type="CheckBox" parent="VBoxContainer/CloudsContainer"]
+layout_mode = 2
+button_pressed = true
+text = "Enable clouds"
+
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
 

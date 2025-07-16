@@ -11,6 +11,7 @@ var damage_multiplier : float = 1.0
 var has_time_limit : bool = false
 var time_limit_minutes : int = 10
 var hearts_enabled : bool = false
+var clouds_enabled : bool = true
 
 # Heart powerup management
 var heart_scene = preload("res://Scenes/Heart.tscn")
@@ -46,6 +47,9 @@ var health_bars : Array[HealthBar] = []
 @onready var weapon_heat_bar = $"../WeaponHeatBar"
 @onready var cooldown_label = $"../CooldownLabel"
 
+# environment elements
+@onready var clouds = $"../Environment/Clouds"
+
 func _ready():
 	# Create a timer to periodically check for new players and create health bars
 	var timer = Timer.new()
@@ -76,13 +80,13 @@ func apply_server_config(config: Dictionary):
 	has_time_limit = config.get("has_time_limit", false)
 	time_limit_minutes = config.get("time_limit_minutes", 10)
 	hearts_enabled = config.get("hearts_enabled", false)
+	clouds_enabled = config.get("clouds_enabled", true)
 	
 	# Start time limit if enabled
 	if has_time_limit:
 		time_limit_seconds = time_limit_minutes * 60.0
 		game_timer.start()
 		_show_timer_ui()
-		print("Game started with %d minute time limit" % time_limit_minutes)
 	else:
 		_hide_timer_ui()
 	
@@ -90,10 +94,13 @@ func apply_server_config(config: Dictionary):
 	if hearts_enabled and multiplayer.is_server():
 		_spawn_heart()
 	
+	# Control cloud visibility
+	_set_clouds_visibility(clouds_enabled)
+	
 	# Show game UI elements now that the game has started
 	_show_game_ui()
 	
-	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled])
+	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled])
 
 func _show_timer_ui():
 	"""Show the countdown timer UI"""
@@ -123,6 +130,24 @@ func _hide_game_ui():
 		weapon_heat_bar.visible = false
 	if cooldown_label:
 		cooldown_label.visible = false
+
+func _set_clouds_visibility(visible: bool):
+	"""Show or hide the clouds based on server configuration"""
+	# Only the server should initiate cloud visibility changes
+	if multiplayer.is_server():
+		_set_clouds_visibility_clients.rpc(visible)
+
+# Called on all CLIENTS (including server) to synchronize cloud visibility
+@rpc("authority", "call_local", "reliable")
+func _set_clouds_visibility_clients(visible: bool):
+	if clouds:
+		clouds.visible = visible
+
+# Send cloud visibility setting to a newly connected peer
+func _sync_clouds_to_peer(peer_id: int):
+	"""Send current cloud visibility setting to a specific peer"""
+	if multiplayer.is_server():
+		rpc_id(peer_id, "_set_clouds_visibility_clients", clouds_enabled)
 
 func _update_timer_display():
 	"""Update the timer display with current time remaining"""
