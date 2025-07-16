@@ -41,6 +41,11 @@ var health_bars : Array[HealthBar] = []
 @onready var timer_ui = $"../TimerUI"
 @onready var timer_label = $"../TimerUI/TimerLabel"
 
+# game UI elements that should be hidden until game starts
+@onready var score_ui = $"../ScoreUI"
+@onready var weapon_heat_bar = $"../WeaponHeatBar"
+@onready var cooldown_label = $"../CooldownLabel"
+
 func _ready():
 	# Create a timer to periodically check for new players and create health bars
 	var timer = Timer.new()
@@ -85,6 +90,9 @@ func apply_server_config(config: Dictionary):
 	if hearts_enabled and multiplayer.is_server():
 		_spawn_heart()
 	
+	# Show game UI elements now that the game has started
+	_show_game_ui()
+	
 	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled])
 
 func _show_timer_ui():
@@ -97,6 +105,24 @@ func _hide_timer_ui():
 	"""Hide the countdown timer UI"""
 	if timer_ui:
 		timer_ui.visible = false
+
+func _show_game_ui():
+	"""Show the scoreboard and cooldown UI when game starts"""
+	if score_ui:
+		score_ui.visible = true
+	if weapon_heat_bar:
+		weapon_heat_bar.visible = true
+	if cooldown_label:
+		cooldown_label.visible = true
+
+func _hide_game_ui():
+	"""Hide the scoreboard and cooldown UI when game is not active"""
+	if score_ui:
+		score_ui.visible = false
+	if weapon_heat_bar:
+		weapon_heat_bar.visible = false
+	if cooldown_label:
+		cooldown_label.visible = false
 
 func _update_timer_display():
 	"""Update the timer display with current time remaining"""
@@ -274,6 +300,7 @@ func reset_game():
 @rpc("authority", "call_local", "reliable")
 func reset_game_clients ():
 	end_screen.visible = false
+	_show_game_ui()  # Show UI again when game resets
 
 # called when the game ends on all CLIENTS
 @rpc("authority", "call_local", "reliable")

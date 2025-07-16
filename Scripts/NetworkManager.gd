@@ -87,6 +87,11 @@ func _on_server_config_confirmed(config: Dictionary):
 func _on_server_config_back():
 	server_config_ui.visible = false
 	network_ui.visible = true
+	
+	# Hide game UI when returning to main menu
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._hide_game_ui()
 
 # actually create the server with the configured settings
 func _actually_start_server():
@@ -150,15 +155,30 @@ func _on_player_disconnected (id : int):
 func _connected_to_server ():
 	print("Connected to server.")
 	network_ui.visible = false
+	
+	# Show game UI when client connects to server
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._show_game_ui()
 
 # called on the CLIENT when connection to a server has failed
 func _connection_failed ():
 	print("Connection failed!")
+	
+	# Hide game UI on connection failure
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._hide_game_ui()
 
 # called on the CLIENT when they have left the server
 func _server_disconnected ():
 	print("Server disconnected.")
 	network_ui.visible = true
+	
+	# Hide game UI when disconnecting from server
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._hide_game_ui()
 	
 	# Hide server config if it's visible
 	if server_config_ui:

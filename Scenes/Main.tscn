@@ -743,6 +743,7 @@ spawn_path = NodePath("../SpawnedNodes")
 [node name="SpawnedNodes" type="Node2D" parent="Network"]
 
 [node name="WeaponHeatBar" type="ProgressBar" parent="."]
+visible = false
 z_index = 99
 offset_left = -210.0
 offset_top = -208.0
@@ -757,6 +758,7 @@ script = ExtResource("89_5bpla")
 fill_color = SubResource("Gradient_jwwkl")
 
 [node name="CooldownLabel" type="Label" parent="."]
+visible = false
 z_index = 100
 offset_left = -177.0
 offset_top = -190.0
@@ -792,6 +794,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ScoreUI" type="Panel" parent="."]
+visible = false
 z_index = 99
 offset_left = -364.0
 offset_top = -208.0
