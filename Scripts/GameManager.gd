@@ -82,10 +82,15 @@ func apply_server_config(config: Dictionary):
 	hearts_enabled = config.get("hearts_enabled", false)
 	clouds_enabled = config.get("clouds_enabled", true)
 	
+	# Send configuration to all clients
+	if multiplayer.is_server():
+		_apply_server_config_clients.rpc(config)
+	
 	# Start time limit if enabled
 	if has_time_limit:
 		time_limit_seconds = time_limit_minutes * 60.0
-		game_timer.start()
+		if multiplayer.is_server():
+			game_timer.start()
 		_show_timer_ui()
 	else:
 		_hide_timer_ui()
@@ -102,14 +107,42 @@ func apply_server_config(config: Dictionary):
 	
 	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled])
 
+@rpc("authority", "call_local", "reliable")
+func _apply_server_config_clients(config: Dictionary):
+	"""Apply server configuration on all clients"""
+	player_lives = config.get("player_lives", 3)
+	max_players = config.get("max_players", 4)
+	speed_multiplier = config.get("speed_multiplier", 1.0)
+	damage_multiplier = config.get("damage_multiplier", 1.0)
+	has_time_limit = config.get("has_time_limit", false)
+	time_limit_minutes = config.get("time_limit_minutes", 10)
+	hearts_enabled = config.get("hearts_enabled", false)
+	clouds_enabled = config.get("clouds_enabled", true)
+	
+	# Set initial timer value for clients
+	if has_time_limit:
+		time_limit_seconds = time_limit_minutes * 60.0
+
 func _show_timer_ui():
 	"""Show the countdown timer UI"""
+	if multiplayer.is_server():
+		_show_timer_ui_clients.rpc()
+
+func _hide_timer_ui():
+	"""Hide the countdown timer UI"""
+	if multiplayer.is_server():
+		_hide_timer_ui_clients.rpc()
+
+@rpc("authority", "call_local", "reliable")
+func _show_timer_ui_clients():
+	"""Show the countdown timer UI on all clients"""
 	if timer_ui:
 		timer_ui.visible = true
 		_update_timer_display()
 
-func _hide_timer_ui():
-	"""Hide the countdown timer UI"""
+@rpc("authority", "call_local", "reliable")
+func _hide_timer_ui_clients():
+	"""Hide the countdown timer UI on all clients"""
 	if timer_ui:
 		timer_ui.visible = false
 
@@ -149,19 +182,54 @@ func _sync_clouds_to_peer(peer_id: int):
 	if multiplayer.is_server():
 		rpc_id(peer_id, "_set_clouds_visibility_clients", clouds_enabled)
 
+# Send server configuration to a newly connected peer
+func _sync_config_to_peer(peer_id: int):
+	"""Send current server configuration to a specific peer"""
+	if multiplayer.is_server():
+		var config = {
+			"player_lives": player_lives,
+			"max_players": max_players,
+			"speed_multiplier": speed_multiplier,
+			"damage_multiplier": damage_multiplier,
+			"has_time_limit": has_time_limit,
+			"time_limit_minutes": time_limit_minutes,
+			"hearts_enabled": hearts_enabled,
+			"clouds_enabled": clouds_enabled
+		}
+		rpc_id(peer_id, "_apply_server_config_clients", config)
+
+# Send timer state to a newly connected peer
+func _sync_timer_to_peer(peer_id: int):
+	"""Send current timer state to a specific peer"""
+	if multiplayer.is_server():
+		if has_time_limit and game_timer.time_left > 0:
+			rpc_id(peer_id, "_show_timer_ui_clients")
+			rpc_id(peer_id, "_update_timer_display_clients", time_limit_seconds)
+		else:
+			rpc_id(peer_id, "_hide_timer_ui_clients")
+
 func _update_timer_display():
 	"""Update the timer display with current time remaining"""
+	if multiplayer.is_server():
+		_update_timer_display_clients.rpc(time_limit_seconds)
+
+@rpc("authority", "call_local", "reliable")
+func _update_timer_display_clients(seconds_remaining: float):
+	"""Update the timer display on all clients"""
+	# Update local timer value for clients
+	time_limit_seconds = seconds_remaining
+	
 	if not timer_label or not has_time_limit:
 		return
 	
-	var minutes = int(time_limit_seconds) / 60
-	var seconds = int(time_limit_seconds) % 60
+	var minutes = int(seconds_remaining) / 60
+	var seconds = int(seconds_remaining) % 60
 	timer_label.text = "%d:%02d" % [minutes, seconds]
 	
 	# Change color based on time remaining
-	if time_limit_seconds <= 10:
+	if seconds_remaining <= 10:
 		timer_label.add_theme_color_override("font_color", Color.RED)
-	elif time_limit_seconds <= 60:
+	elif seconds_remaining <= 60:
 		timer_label.add_theme_color_override("font_color", Color.YELLOW)
 	else:
 		timer_label.add_theme_color_override("font_color", Color.WHITE)

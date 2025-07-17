@@ -141,9 +141,11 @@ func _on_player_connected (id : int):
 		if game_manager and game_manager.current_heart != null and is_instance_valid(game_manager.current_heart):
 			game_manager._spawn_heart_for_peer(game_manager.current_heart.position, id)
 		
-		# Sync cloud visibility to the new player
+		# Sync server configuration, cloud visibility and timer state to the new player
 		if game_manager:
+			game_manager._sync_config_to_peer(id)
 			game_manager._sync_clouds_to_peer(id)
+			game_manager._sync_timer_to_peer(id)
 
 # called on the SERVER when a player leaves
 # destroy their plane object
