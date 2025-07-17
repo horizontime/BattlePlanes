@@ -848,7 +848,19 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(15, 0)
 layout_mode = 2
 
-[node name="HSeparator" type="HSeparator" parent="ScoreUI/VBoxContainer"]
+[node name="SeparatorContainer" type="HBoxContainer" parent="ScoreUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="LeftSeparatorSpacer" type="Control" parent="ScoreUI/VBoxContainer/SeparatorContainer"]
+custom_minimum_size = Vector2(15, 0)
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="ScoreUI/VBoxContainer/SeparatorContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RightSeparatorSpacer" type="Control" parent="ScoreUI/VBoxContainer/SeparatorContainer"]
+custom_minimum_size = Vector2(15, 0)
 layout_mode = 2
 
 [node name="PlayerList" type="VBoxContainer" parent="ScoreUI/VBoxContainer"]
