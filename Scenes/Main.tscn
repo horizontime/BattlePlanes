@@ -844,6 +844,15 @@ theme_override_font_sizes/font_size = 12
 text = "Kills"
 horizontal_alignment = 1
 
+[node name="ScoreHeader" type="Label" parent="ScoreUI/VBoxContainer/Header"]
+visible = false
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "Score"
+horizontal_alignment = 1
+
 [node name="RightSpacer" type="Control" parent="ScoreUI/VBoxContainer/Header"]
 custom_minimum_size = Vector2(15, 0)
 layout_mode = 2

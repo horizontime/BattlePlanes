@@ -12,11 +12,19 @@ var has_time_limit : bool = false
 var time_limit_minutes : int = 10
 var hearts_enabled : bool = false
 var clouds_enabled : bool = true
+var oddball_mode : bool = false
 
 # Heart powerup management
 var heart_scene = preload("res://Scenes/Heart.tscn")
 var current_heart : Heart = null
 var heart_spawn_timer : Timer
+
+# Oddball mode management
+var skull_scene = preload("res://Scenes/Skull.tscn")
+var current_skull : Skull = null
+var skull_holder : Player = null
+var oddball_score_timer : Timer
+var oddball_win_score : int = 60
 
 # Time limit tracking
 var time_limit_seconds : float = 0.0
@@ -70,6 +78,12 @@ func _ready():
 	heart_spawn_timer.one_shot = true
 	heart_spawn_timer.timeout.connect(_spawn_heart)
 	add_child(heart_spawn_timer)
+	
+	# Create oddball score timer
+	oddball_score_timer = Timer.new()
+	oddball_score_timer.wait_time = 1.0  # 1 second
+	oddball_score_timer.timeout.connect(_on_oddball_score_timer)
+	add_child(oddball_score_timer)
 
 func apply_server_config(config: Dictionary):
 	"""Apply server configuration settings to the game"""
@@ -81,6 +95,7 @@ func apply_server_config(config: Dictionary):
 	time_limit_minutes = config.get("time_limit_minutes", 10)
 	hearts_enabled = config.get("hearts_enabled", false)
 	clouds_enabled = config.get("clouds_enabled", true)
+	oddball_mode = config.get("oddball_mode", false)
 	
 	# Send configuration to all clients
 	if multiplayer.is_server():
@@ -99,13 +114,17 @@ func apply_server_config(config: Dictionary):
 	if hearts_enabled and multiplayer.is_server():
 		_spawn_heart()
 	
+	# Spawn skull if oddball mode is enabled
+	if oddball_mode and multiplayer.is_server():
+		_spawn_skull()
+	
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
 	# Show game UI elements now that the game has started
 	_show_game_ui()
 	
-	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled])
+	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s, Oddball=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled, oddball_mode])
 
 @rpc("authority", "call_local", "reliable")
 func _apply_server_config_clients(config: Dictionary):
@@ -118,6 +137,7 @@ func _apply_server_config_clients(config: Dictionary):
 	time_limit_minutes = config.get("time_limit_minutes", 10)
 	hearts_enabled = config.get("hearts_enabled", false)
 	clouds_enabled = config.get("clouds_enabled", true)
+	oddball_mode = config.get("oddball_mode", false)
 	
 	# Set initial timer value for clients
 	if has_time_limit:
@@ -194,7 +214,8 @@ func _sync_config_to_peer(peer_id: int):
 			"has_time_limit": has_time_limit,
 			"time_limit_minutes": time_limit_minutes,
 			"hearts_enabled": hearts_enabled,
-			"clouds_enabled": clouds_enabled
+			"clouds_enabled": clouds_enabled,
+			"oddball_mode": oddball_mode
 		}
 		rpc_id(peer_id, "_apply_server_config_clients", config)
 
@@ -368,6 +389,7 @@ func reset_game():
 	for player in players:
 		player.respawn()
 		player.score = 0
+		player.oddball_score = 0
 		# Reset lives to configured amount
 		player.lives_remaining = player_lives
 	
@@ -388,6 +410,18 @@ func reset_game():
 		heart_spawn_timer.stop()
 		# Spawn a new heart immediately
 		_spawn_heart()
+	
+	# Reset oddball mode
+	if oddball_mode and multiplayer.is_server():
+		# Stop scoring timer
+		oddball_score_timer.stop()
+		skull_holder = null
+		# Remove any existing skull
+		if current_skull != null and is_instance_valid(current_skull):
+			current_skull.queue_free()
+		current_skull = null
+		# Spawn a new skull immediately
+		_spawn_skull()
 	
 	reset_game_clients.rpc()
 
@@ -512,3 +546,57 @@ func _on_heart_collected():
 	if hearts_enabled:
 		heart_spawn_timer.start()
 		print("Next heart will spawn in 30 seconds")
+
+# ============================================================
+# ODDBALL MODE FUNCTIONS
+# ============================================================
+
+func _spawn_skull():
+	"""Spawn the skull for oddball mode"""
+	if not multiplayer.is_server() or not oddball_mode:
+		return
+	
+	if current_skull != null and is_instance_valid(current_skull):
+		return
+	
+	print("[Skull] Server spawning skull...")
+	
+	current_skull = skull_scene.instantiate()
+	current_skull.position = get_random_position()
+	current_skull.skull_picked_up.connect(_on_skull_picked_up)
+	current_skull.skull_dropped.connect(_on_skull_dropped)
+	
+	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(current_skull, true)
+	
+	print("Skull spawned at position: " + str(current_skull.position))
+
+func _on_skull_picked_up(player: Player):
+	"""Called when a player picks up the skull"""
+	skull_holder = player
+	oddball_score_timer.start()
+	print("Skull picked up by: " + player.player_name)
+
+func _on_skull_dropped():
+	"""Called when the skull is dropped"""
+	skull_holder = null
+	oddball_score_timer.stop()
+	print("Skull dropped!")
+
+func _on_oddball_score_timer():
+	"""Give 1 point every second to skull holder"""
+	if skull_holder and is_instance_valid(skull_holder):
+		skull_holder.oddball_score += 1
+		
+		# Check for win condition
+		if skull_holder.oddball_score >= oddball_win_score:
+			_oddball_win(skull_holder)
+
+func _oddball_win(winner: Player):
+	"""Handle oddball mode win"""
+	oddball_score_timer.stop()
+	end_game_clients.rpc(winner.player_name + " (Oddball Winner)")
+
+func drop_skull_on_death(player: Player):
+	"""Drop skull when player dies if they're holding it"""
+	if oddball_mode and skull_holder == player and current_skull:
+		current_skull.drop_skull()

@@ -22,6 +22,7 @@ var projectile_scene = preload("res://Scenes/Projectile.tscn")
 @export var cur_hp : int = 100
 @export var max_hp : int = 100
 @export var score : int = 0
+@export var oddball_score : int = 0
 @export var lives_remaining : int = 3
 var last_attacker_id : int
 var is_alive : bool = true
@@ -191,6 +192,9 @@ func take_damage_clients ():
 	sprite.modulate = Color(1, 1, 1)
 
 func die ():
+	# Drop skull if holding it in oddball mode
+	game_manager.drop_skull_on_death(self)
+	
 	lives_remaining -= 1
 	is_alive = false
 	position = Vector2(0, 9999)

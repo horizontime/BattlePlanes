@@ -12,18 +12,21 @@ class_name ServerConfig
 @onready var time_limit_spinbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer/TimeLimitSpinBox
 @onready var hearts_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/HeartsContainer/HeartsCheckBox
 @onready var clouds_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/CloudsContainer/CloudsCheckBox
+@onready var oddball_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer/OddballCheckBox
 
 # UI References - Free-for-all Tab
 @onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatch"
 @onready var timed_combat_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombat"
 @onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStanding"
 @onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatch"
+@onready var oddball_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/Oddball"
 
 # UI References - Free-for-all Descriptions
 @onready var classic_deathmatch_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc"
 @onready var timed_combat_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombatDesc"
 @onready var last_plane_standing_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc"
 @onready var quick_match_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc"
+@onready var oddball_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/OddballDesc"
 
 # UI References - Team Modes Tab
 @onready var team_deathmatch_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch"
@@ -51,6 +54,7 @@ var has_time_limit: bool = false
 var time_limit_minutes: int = 5
 var hearts_enabled: bool = false
 var clouds_enabled: bool = true
+var oddball_mode: bool = false
 var selected_game_mode: String = ""
 var game_mode_type: String = ""  # "ffa", "team", or "custom"
 
@@ -97,6 +101,16 @@ var ffa_presets = {
 		"time_limit_minutes": 5,
 		"hearts_enabled": true,
 		"clouds_enabled": true
+	},
+	"Oddball": {
+		"player_lives": 3,
+		"max_players": 6,
+		"speed_multiplier": 1.0,
+		"damage_multiplier": 1.0,
+		"has_time_limit": false,
+		"hearts_enabled": false,
+		"clouds_enabled": true,
+		"oddball_mode": true
 	}
 }
 
@@ -148,7 +162,8 @@ var ffa_descriptions = {
 	"Classic Deathmatch": "Standard dogfight action\n• 3 Lives per player\n• Up to 6 players\n• No time limit\n• Classic combat experience",
 	"Timed Combat": "Fast-paced combat with time limit\n• 5 Lives per player\n• Up to 4 players\n• 10 minute time limit\n• 1.2x speed boost\n• Heart powerups enabled",
 	"Last Plane Standing": "Elimination mode - one life only\n• 1 Life per player\n• Up to 8 players\n• No time limit\n• 0.8x speed, 1.5x damage\n• No clouds for better visibility",
-	"Quick Match": "Quick action for casual play\n• 2 Lives per player\n• Up to 4 players\n• 5 minute time limit\n• 1.5x speed, 1.2x damage\n• Heart powerups enabled"
+	"Quick Match": "Quick action for casual play\n• 2 Lives per player\n• Up to 4 players\n• 5 minute time limit\n• 1.5x speed, 1.2x damage\n• Heart powerups enabled",
+	"Oddball": "Hold the skull to score points\n• 3 Lives per player\n• Up to 6 players\n• No time limit\n• First to 60 seconds wins\n• Drop skull when killed"
 }
 
 var team_descriptions = {
@@ -168,6 +183,7 @@ func _ready():
 	time_limit_spinbox.value = time_limit_minutes
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
+	oddball_checkbox.button_pressed = oddball_mode
 	
 	# Configure game mode buttons for single-click interaction
 	_configure_game_mode_buttons()
@@ -181,12 +197,14 @@ func _ready():
 	time_limit_spinbox.value_changed.connect(_on_time_limit_value_changed)
 	hearts_checkbox.toggled.connect(_on_hearts_toggled)
 	clouds_checkbox.toggled.connect(_on_clouds_toggled)
+	oddball_checkbox.toggled.connect(_on_oddball_toggled)
 	
 	# Connect signals - FFA tab
 	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Classic Deathmatch", "ffa"))
 	timed_combat_btn.pressed.connect(_on_game_mode_selected.bind("Timed Combat", "ffa"))
 	last_plane_standing_btn.pressed.connect(_on_game_mode_selected.bind("Last Plane Standing", "ffa"))
 	quick_match_btn.pressed.connect(_on_game_mode_selected.bind("Quick Match", "ffa"))
+	oddball_btn.pressed.connect(_on_game_mode_selected.bind("Oddball", "ffa"))
 	
 	# Connect signals - Team tab
 	team_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Team Deathmatch", "team"))
@@ -239,6 +257,10 @@ func _on_clouds_toggled(pressed: bool):
 	clouds_enabled = pressed
 	_mark_as_custom()
 
+func _on_oddball_toggled(pressed: bool):
+	oddball_mode = pressed
+	_mark_as_custom()
+
 func _on_game_mode_selected(mode_name: String, mode_type: String):
 	selected_game_mode = mode_name
 	game_mode_type = mode_type
@@ -266,6 +288,7 @@ func _hide_all_descriptions():
 	timed_combat_desc.visible = false
 	last_plane_standing_desc.visible = false
 	quick_match_desc.visible = false
+	oddball_desc.visible = false
 	
 	# Hide Team descriptions
 	team_deathmatch_desc.visible = false
@@ -289,6 +312,8 @@ func _show_description(mode_name: String, mode_type: String):
 				description_container = last_plane_standing_desc
 			"Quick Match":
 				description_container = quick_match_desc
+			"Oddball":
+				description_container = oddball_desc
 	else:  # team mode
 		description_text = team_descriptions[mode_name]
 		match mode_name:
@@ -333,6 +358,7 @@ func _apply_preset_config(config: Dictionary):
 	time_limit_minutes = config.get("time_limit_minutes", 5)
 	hearts_enabled = config.hearts_enabled
 	clouds_enabled = config.clouds_enabled
+	oddball_mode = config.get("oddball_mode", false)
 	
 	# Update UI elements
 	lives_spinbox.value = player_lives
@@ -343,6 +369,7 @@ func _apply_preset_config(config: Dictionary):
 	time_limit_spinbox.value = time_limit_minutes
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
+	oddball_checkbox.button_pressed = oddball_mode
 	
 	_update_labels()
 	_update_time_limit_visibility()
@@ -390,6 +417,7 @@ func _on_start_server_pressed():
 		"time_limit_minutes": time_limit_minutes,
 		"hearts_enabled": hearts_enabled,
 		"clouds_enabled": clouds_enabled,
+		"oddball_mode": oddball_mode,
 		"game_mode": selected_game_mode,
 		"game_mode_type": game_mode_type
 	}

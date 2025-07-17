@@ -4,6 +4,7 @@ var game_manager
 @onready var header_name = $VBoxContainer/Header/NameHeader
 @onready var header_lives = $VBoxContainer/Header/LivesHeader
 @onready var header_kills = $VBoxContainer/Header/KillsHeader
+@onready var header_score = $VBoxContainer/Header/ScoreHeader
 @onready var player_list = $VBoxContainer/PlayerList
 
 func _ready():
@@ -13,6 +14,13 @@ func _ready():
 	header_name.text = "Name"
 	header_lives.text = "Lives"
 	header_kills.text = "Kills"
+	
+	# Show or hide score column based on game mode
+	if game_manager.oddball_mode:
+		header_score.text = "Score"
+		header_score.visible = true
+	else:
+		header_score.visible = false
 
 func _process(delta):
 	# Clear existing player entries
@@ -52,6 +60,18 @@ func _process(delta):
 		kills_label.add_theme_font_size_override("font_size", 11)
 		kills_label.add_theme_color_override("font_color", Color.WHITE)
 		
+		# Score column (for oddball mode)
+		var score_label = Label.new()
+		if game_manager.oddball_mode:
+			score_label.text = str(player.oddball_score)
+			score_label.visible = true
+		else:
+			score_label.visible = false
+		score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		score_label.custom_minimum_size.x = 40
+		score_label.add_theme_font_size_override("font_size", 11)
+		score_label.add_theme_color_override("font_color", Color.WHITE)
+		
 		# Right spacer
 		var right_spacer = Control.new()
 		right_spacer.custom_minimum_size = Vector2(15, 0)
@@ -61,6 +81,8 @@ func _process(delta):
 		row.add_child(name_label)
 		row.add_child(lives_label)
 		row.add_child(kills_label)
+		if game_manager.oddball_mode:
+			row.add_child(score_label)
 		row.add_child(right_spacer)
 		
 		# Add row to player list
