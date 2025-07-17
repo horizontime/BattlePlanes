@@ -730,7 +730,7 @@ placeholder_text = "IP Address..."
 
 [node name="PortInput" type="LineEdit" parent="Network/NetworkUI/VBoxContainer"]
 layout_mode = 2
-placeholder_text = "Port..."
+placeholder_text = "Port... (1024-65535)"
 
 [node name="UsernameInput" type="LineEdit" parent="Network/NetworkUI/VBoxContainer"]
 layout_mode = 2
@@ -896,5 +896,6 @@ text = "Play Again"
 
 [connection signal="pressed" from="Network/NetworkUI/VBoxContainer/StartServerButton" to="Network" method="start_host"]
 [connection signal="pressed" from="Network/NetworkUI/VBoxContainer/JoinServerButton" to="Network" method="start_client"]
+[connection signal="text_changed" from="Network/NetworkUI/VBoxContainer/PortInput" to="Network" method="_on_port_input_text_changed"]
 [connection signal="text_changed" from="Network/NetworkUI/VBoxContainer/UsernameInput" to="Network" method="_on_username_input_text_changed"]
 [connection signal="pressed" from="EndScreen/PlayAgainButton" to="GameManager" method="_on_play_again_button_pressed"]

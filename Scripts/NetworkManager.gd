@@ -191,7 +191,20 @@ func _server_disconnected ():
 		server_config_ui.visible = false
 
 func _on_username_input_text_changed(new_text):
+	if new_text.length() > 10:
+		var username_input = $NetworkUI/VBoxContainer/UsernameInput
+		var caret_pos = username_input.caret_column
+		username_input.text = new_text.substr(0, 10)
+		username_input.caret_column = min(caret_pos, 10)
+		new_text = username_input.text
 	local_username = new_text
+
+func _on_port_input_text_changed(new_text):
+	if new_text.length() > 5:
+		var port_input = $NetworkUI/VBoxContainer/PortInput
+		var caret_pos = port_input.caret_column
+		port_input.text = new_text.substr(0, 5)
+		port_input.caret_column = min(caret_pos, 5)
 
 func get_server_config() -> Dictionary:
 	return current_server_config
