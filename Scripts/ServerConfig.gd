@@ -107,7 +107,8 @@ var ffa_presets = {
 		"max_players": 6,
 		"speed_multiplier": 1.0,
 		"damage_multiplier": 1.0,
-		"has_time_limit": false,
+		"has_time_limit": true,
+		"time_limit_minutes": 5,
 		"hearts_enabled": false,
 		"clouds_enabled": true,
 		"oddball_mode": true
@@ -163,7 +164,7 @@ var ffa_descriptions = {
 	"Timed Combat": "Fast-paced combat with time limit\n• 5 Lives per player\n• Up to 4 players\n• 10 minute time limit\n• 1.2x speed boost\n• Heart powerups enabled",
 	"Last Plane Standing": "Elimination mode - one life only\n• 1 Life per player\n• Up to 8 players\n• No time limit\n• 0.8x speed, 1.5x damage\n• No clouds for better visibility",
 	"Quick Match": "Quick action for casual play\n• 2 Lives per player\n• Up to 4 players\n• 5 minute time limit\n• 1.5x speed, 1.2x damage\n• Heart powerups enabled",
-	"Oddball": "Hold the skull to score points\n• 3 Lives per player\n• Up to 6 players\n• No time limit\n• First to 60 seconds wins\n• Drop skull when killed"
+	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Drop skull when killed"
 }
 
 var team_descriptions = {

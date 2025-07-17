@@ -141,6 +141,10 @@ func _on_player_connected (id : int):
 		if game_manager and game_manager.current_heart != null and is_instance_valid(game_manager.current_heart):
 			game_manager._spawn_heart_for_peer(game_manager.current_heart.position, id)
 		
+		# If a skull currently exists, instruct server to send it to the new peer so they can see it
+		if game_manager:
+			game_manager._sync_skull_to_peer(id)
+		
 		# Sync server configuration, cloud visibility and timer state to the new player
 		if game_manager:
 			game_manager._sync_config_to_peer(id)

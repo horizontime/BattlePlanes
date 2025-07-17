@@ -195,16 +195,19 @@ func die ():
 	# Drop skull if holding it in oddball mode
 	game_manager.drop_skull_on_death(self)
 	
-	lives_remaining -= 1
+	# In oddball mode, don't lose lives
+	if not game_manager.oddball_mode:
+		lives_remaining -= 1
+	
 	is_alive = false
 	position = Vector2(0, 9999)
 	
-	# Check if player has lives remaining
-	if lives_remaining > 0:
+	# Check if player has lives remaining (always true in oddball mode)
+	if lives_remaining > 0 or game_manager.oddball_mode:
 		respawn_timer.start(2)
 		game_manager.on_player_die(player_id, last_attacker_id)
 	else:
-		# Player is eliminated
+		# Player is eliminated (won't happen in oddball mode)
 		game_manager.on_player_eliminated(player_id, last_attacker_id)
 	
 	die_clients.rpc()

@@ -7,22 +7,27 @@ var game_manager
 @onready var header_score = $VBoxContainer/Header/ScoreHeader
 @onready var player_list = $VBoxContainer/PlayerList
 
+var last_oddball_mode = false  # Track mode changes
+
 func _ready():
 	game_manager = get_tree().get_current_scene().get_node("GameManager")
 	
-	# Set up table headers
+	# Set up table headers (will be updated dynamically in _process)
 	header_name.text = "Name"
-	header_lives.text = "Lives"
-	header_kills.text = "Kills"
-	
-	# Show or hide score column based on game mode
-	if game_manager.oddball_mode:
-		header_score.text = "Score"
-		header_score.visible = true
-	else:
-		header_score.visible = false
 
 func _process(delta):
+	# Update headers only when game mode changes
+	if game_manager.oddball_mode != last_oddball_mode:
+		last_oddball_mode = game_manager.oddball_mode
+		if game_manager.oddball_mode:
+			header_lives.text = "Score"  # Reuse lives header for score in oddball
+			header_kills.text = "Kills"
+			header_score.visible = false  # Don't need separate score column
+		else:
+			header_lives.text = "Lives"
+			header_kills.text = "Kills"
+			header_score.visible = false
+	
 	# Clear existing player entries
 	for child in player_list.get_children():
 		child.queue_free()
@@ -44,9 +49,12 @@ func _process(delta):
 		name_label.add_theme_font_size_override("font_size", 11)
 		name_label.add_theme_color_override("font_color", Color.WHITE)
 		
-		# Lives column
+		# Lives/Score column (context dependent)
 		var lives_label = Label.new()
-		lives_label.text = str(player.lives_remaining)
+		if game_manager.oddball_mode:
+			lives_label.text = str(player.oddball_score)  # Show oddball score
+		else:
+			lives_label.text = str(player.lives_remaining)  # Show lives
 		lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lives_label.custom_minimum_size.x = 40
 		lives_label.add_theme_font_size_override("font_size", 11)
@@ -60,18 +68,6 @@ func _process(delta):
 		kills_label.add_theme_font_size_override("font_size", 11)
 		kills_label.add_theme_color_override("font_color", Color.WHITE)
 		
-		# Score column (for oddball mode)
-		var score_label = Label.new()
-		if game_manager.oddball_mode:
-			score_label.text = str(player.oddball_score)
-			score_label.visible = true
-		else:
-			score_label.visible = false
-		score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		score_label.custom_minimum_size.x = 40
-		score_label.add_theme_font_size_override("font_size", 11)
-		score_label.add_theme_color_override("font_color", Color.WHITE)
-		
 		# Right spacer
 		var right_spacer = Control.new()
 		right_spacer.custom_minimum_size = Vector2(15, 0)
@@ -81,8 +77,6 @@ func _process(delta):
 		row.add_child(name_label)
 		row.add_child(lives_label)
 		row.add_child(kills_label)
-		if game_manager.oddball_mode:
-			row.add_child(score_label)
 		row.add_child(right_spacer)
 		
 		# Add row to player list

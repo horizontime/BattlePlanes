@@ -275,36 +275,65 @@ func _time_limit_reached():
 	game_timer.stop()
 	_hide_timer_ui()
 	
-	# Find player(s) with highest score
-	var highest_score = -1
-	var winners: Array[Player] = []
+	# Stop oddball scoring if active
+	if oddball_mode:
+		oddball_score_timer.stop()
 	
-	# Get all players that are still alive (have lives remaining)
-	var alive_players = []
-	for player in players:
-		if player.lives_remaining > 0:
-			alive_players.append(player)
-	
-	# Find highest score among alive players
-	for player in alive_players:
-		if player.score > highest_score:
-			highest_score = player.score
-			winners = [player]
-		elif player.score == highest_score:
-			winners.append(player)
-	
-	# Handle different scenarios
-	if winners.size() == 0:
-		end_game_clients.rpc("Time Limit Reached - No Winner")
-	elif winners.size() == 1:
-		end_game_clients.rpc(winners[0].player_name + " (Most Kills)")
+	if oddball_mode:
+		# Oddball mode: winner is player with highest oddball score
+		var highest_score = -1
+		var winners: Array[Player] = []
+		
+		for player in players:
+			if player.oddball_score > highest_score:
+				highest_score = player.oddball_score
+				winners = [player]
+			elif player.oddball_score == highest_score:
+				winners.append(player)
+		
+		# Handle oddball results
+		if winners.size() == 0 or highest_score == 0:
+			end_game_clients.rpc("Time Limit Reached - No Winner")
+		elif winners.size() == 1:
+			end_game_clients.rpc(winners[0].player_name + " (Oddball Winner - " + str(highest_score) + " seconds)")
+		else:
+			# Multiple winners - tie
+			var winner_names = []
+			for winner in winners:
+				winner_names.append(winner.player_name)
+			var tie_text = "Tie Game!\n" + " & ".join(winner_names) + " tied with " + str(highest_score) + " seconds"
+			end_game_clients.rpc(tie_text)
 	else:
-		# Multiple winners - tie
-		var winner_names = []
-		for winner in winners:
-			winner_names.append(winner.player_name)
-		var tie_text = "Tie Game!\n" + " & ".join(winner_names) + " tie for " + _get_place_suffix(highest_score)
-		end_game_clients.rpc(tie_text)
+		# Standard mode: winner is player with highest kill score
+		var highest_score = -1
+		var winners: Array[Player] = []
+		
+		# Get all players that are still alive (have lives remaining)
+		var alive_players = []
+		for player in players:
+			if player.lives_remaining > 0:
+				alive_players.append(player)
+		
+		# Find highest score among alive players
+		for player in alive_players:
+			if player.score > highest_score:
+				highest_score = player.score
+				winners = [player]
+			elif player.score == highest_score:
+				winners.append(player)
+		
+		# Handle different scenarios
+		if winners.size() == 0:
+			end_game_clients.rpc("Time Limit Reached - No Winner")
+		elif winners.size() == 1:
+			end_game_clients.rpc(winners[0].player_name + " (Most Kills)")
+		else:
+			# Multiple winners - tie
+			var winner_names = []
+			for winner in winners:
+				winner_names.append(winner.player_name)
+			var tie_text = "Tie Game!\n" + " & ".join(winner_names) + " tie for " + _get_place_suffix(highest_score)
+			end_game_clients.rpc(tie_text)
 
 func _check_for_new_players():
 	# Create health bars for any players that don't have one yet
@@ -568,6 +597,10 @@ func _spawn_skull():
 	
 	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(current_skull, true)
 	
+	# Inform all clients to spawn a matching skull locally
+	print("[Skull] Calling RPC to spawn skull on clients at position: " + str(current_skull.position))
+	rpc("_spawn_skull_clients", current_skull.position)
+	
 	print("Skull spawned at position: " + str(current_skull.position))
 
 func _on_skull_picked_up(player: Player):
@@ -587,6 +620,9 @@ func _on_oddball_score_timer():
 	if skull_holder and is_instance_valid(skull_holder):
 		skull_holder.oddball_score += 1
 		
+		# Sync score to all clients
+		_sync_oddball_score.rpc(skull_holder.player_id, skull_holder.oddball_score)
+		
 		# Check for win condition
 		if skull_holder.oddball_score >= oddball_win_score:
 			_oddball_win(skull_holder)
@@ -596,7 +632,48 @@ func _oddball_win(winner: Player):
 	oddball_score_timer.stop()
 	end_game_clients.rpc(winner.player_name + " (Oddball Winner)")
 
+@rpc("authority", "call_local", "reliable")
+func _spawn_skull_clients(position: Vector2):
+	"""Create a skull on non-server peers so everyone can see it"""
+	print("[Skull] _spawn_skull_clients called with position: " + str(position))
+	
+	# Avoid duplicating the skull on the server
+	if multiplayer.is_server():
+		print("[Skull] Client spawn ignored on server")
+		return
+
+	# Safety: ensure we don't already have a skull
+	for child in get_tree().get_current_scene().get_node("Network/SpawnedNodes").get_children():
+		if child is Skull:
+			print("[Skull] Client already has a skull, skipping spawn")
+			return
+
+	print("[Skull] Client spawning skull at position: " + str(position))
+	var skull = skull_scene.instantiate()
+	skull.position = position
+	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(skull)
+	print("[Skull] Client skull spawned successfully")
+
+@rpc("authority", "call_local", "reliable")
+func _sync_oddball_score(player_id: int, score: int):
+	"""Sync oddball score to all clients"""
+	var player = get_player(player_id)
+	if player:
+		player.oddball_score = score
+
 func drop_skull_on_death(player: Player):
 	"""Drop skull when player dies if they're holding it"""
 	if oddball_mode and skull_holder == player and current_skull:
 		current_skull.drop_skull()
+
+# Send skull to a single newly-connected peer (called by NetworkManager)
+func _sync_skull_to_peer(peer_id: int):
+	"""Send current skull state to a specific peer"""
+	if multiplayer.is_server() and oddball_mode and current_skull and is_instance_valid(current_skull):
+		rpc_id(peer_id, "_spawn_skull_clients", current_skull.position)
+	
+	# Also sync all players' oddball scores to the new peer
+	if multiplayer.is_server() and oddball_mode:
+		for player in players:
+			if player.oddball_score > 0:
+				rpc_id(peer_id, "_sync_oddball_score", player.player_id, player.oddball_score)
