@@ -17,7 +17,7 @@ func _ready():
 func _process(_delta):
 	if target_player and target_player.is_alive:
 		# Keep the health bar positioned above the player
-		global_position = target_player.global_position + Vector2(-25, -45)
+		global_position = target_player.global_position + Vector2(-25, -30)
 		update_health_display()
 		visible = true
 	else:
