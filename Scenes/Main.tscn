@@ -817,12 +817,24 @@ grow_vertical = 2
 [node name="Header" type="HBoxContainer" parent="ScoreUI/VBoxContainer"]
 layout_mode = 2
 
+[node name="LeftSpacer" type="Control" parent="ScoreUI/VBoxContainer/Header"]
+custom_minimum_size = Vector2(15, 0)
+layout_mode = 2
+
 [node name="NameHeader" type="Label" parent="ScoreUI/VBoxContainer/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 12
 text = "Name"
+
+[node name="LivesHeader" type="Label" parent="ScoreUI/VBoxContainer/Header"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "Lives"
+horizontal_alignment = 1
 
 [node name="KillsHeader" type="Label" parent="ScoreUI/VBoxContainer/Header"]
 custom_minimum_size = Vector2(40, 0)
@@ -831,6 +843,10 @@ theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 12
 text = "Kills"
 horizontal_alignment = 1
+
+[node name="RightSpacer" type="Control" parent="ScoreUI/VBoxContainer/Header"]
+custom_minimum_size = Vector2(15, 0)
+layout_mode = 2
 
 [node name="HSeparator" type="HSeparator" parent="ScoreUI/VBoxContainer"]
 layout_mode = 2
