@@ -3,7 +3,6 @@ class_name HealthBar
 
 @onready var health_progress : ProgressBar = $HealthProgress
 @onready var background : NinePatchRect = $Background
-@onready var health_label : Label = $HealthLabel
 @onready var name_label : Label = $NameLabel
 
 var target_player : Player = null
@@ -38,8 +37,7 @@ func update_health_display():
 	var health_percentage = float(target_player.cur_hp) / float(target_player.max_hp) * 100.0
 	health_progress.value = health_percentage
 	
-	# Show health and lives remaining
-	health_label.text = "%d/%d ♥%d" % [target_player.cur_hp, target_player.max_hp, target_player.lives_remaining]
+
 	
 	# Update player name
 	if name_label and target_player.player_name != "":
