@@ -38,7 +38,7 @@ func _process(delta):
 		
 		# Lives column
 		var lives_label = Label.new()
-		lives_label.text = str(player.lives) if player.has_method("get") and player.get("lives") != null else "5"
+		lives_label.text = str(player.lives_remaining)
 		lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lives_label.custom_minimum_size.x = 40
 		lives_label.add_theme_font_size_override("font_size", 11)
