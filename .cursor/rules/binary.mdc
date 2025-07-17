@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+Do not edit or create any binary data. 
+
+Do not edit or create and "byte" functions. For example the "PackedByteArray" function.
