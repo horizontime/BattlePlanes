@@ -107,10 +107,11 @@ func _ready():
 		await get_tree().process_frame
 		position = game_manager.get_random_position()
 		rotation = randf() * 2 * PI  # Random initial rotation
+		sprite.visible = true  # Ensure sprite is visible on spawn
 		print("Player %d spawned at position: %s, rotation: %s" % [player_id, position, rotation])
 		
-		# Sync initial transform to all clients
-		_sync_transform.rpc(position, rotation)
+		# Sync initial spawn state to all clients
+		_sync_respawn_state.rpc(position, rotation)
 
 func _apply_speed_multiplier():
 	"""Apply the speed multiplier from game configuration"""
@@ -189,6 +190,8 @@ func play_shoot_sfx ():
 func take_damage (damage_amount : int, attacker_player_id : int):
 	cur_hp -= damage_amount
 	last_attacker_id = attacker_player_id
+	# Sync health to all clients immediately
+	_sync_health.rpc(cur_hp)
 	take_damage_clients.rpc()
 	
 	if cur_hp <= 0:
@@ -222,6 +225,10 @@ func die ():
 	
 	is_alive = false
 	position = Vector2(0, 9999)
+	sprite.visible = false  # Hide sprite on server too
+	
+	# Sync death state to all clients
+	_sync_death_state.rpc()
 	
 	# Check if player has lives remaining (always true in oddball mode, KOTH mode, or Slayer mode)
 	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "Slayer":
@@ -251,9 +258,11 @@ func respawn ():
 		last_attacker_id = 0
 		position = game_manager.get_random_position()
 		rotation = randf() * 2 * PI  # Random respawn rotation
+		sprite.visible = true  # Show sprite on server
 		
-		# Sync respawn transform to all clients
-		_sync_transform.rpc(position, rotation)
+		# Sync respawn state and health to all clients
+		_sync_respawn_state.rpc(position, rotation)
+		_sync_health.rpc(cur_hp)
 
 func _manage_weapon_heat (delta):
 	if cur_weapon_heat < max_weapon_heat:
@@ -300,6 +309,27 @@ func _sync_transform(new_position: Vector2, new_rotation: float):
 	if not multiplayer.is_server():
 		position = new_position
 		rotation = new_rotation
+
+@rpc("reliable")
+func _sync_death_state():
+	if not multiplayer.is_server():
+		is_alive = false
+		position = Vector2(0, 9999)
+		# Hide sprite visually on death
+		sprite.visible = false
+
+@rpc("reliable")
+func _sync_respawn_state(new_position: Vector2, new_rotation: float):
+	if not multiplayer.is_server():
+		is_alive = true
+		position = new_position
+		rotation = new_rotation
+		sprite.visible = true  # Show sprite on respawn
+
+@rpc("reliable")
+func _sync_health(new_hp: int):
+	if not multiplayer.is_server():
+		cur_hp = new_hp
 
 func gain_extra_life():
 	"""Called when player gains an extra life from a heart"""

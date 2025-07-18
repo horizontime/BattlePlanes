@@ -140,6 +140,9 @@ func apply_server_config(config: Dictionary):
 	
 	# Spawn skull if oddball mode is enabled
 	if oddball_mode and multiplayer.is_server():
+		print("Oddball mode enabled, spawning skull...")
+		# Small delay to ensure all clients are ready
+		await get_tree().create_timer(0.5).timeout
 		_spawn_skull()
 	
 	# Spawn hill if KOTH mode is enabled
