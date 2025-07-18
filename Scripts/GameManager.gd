@@ -455,6 +455,9 @@ func on_player_die (player_id : int, attacker_id : int):
 	
 	attacker.increase_score(1)
 	
+	# Sync kills count to all clients
+	_sync_score.rpc(attacker_id, attacker.score)
+	
 	# Sync deaths count to all clients
 	_sync_deaths.rpc(player_id, player.deaths)
 	
@@ -471,6 +474,9 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	var attacker : Player = get_player(attacker_id)
 	
 	attacker.increase_score(1)
+	
+	# Sync kills count to all clients
+	_sync_score.rpc(attacker_id, attacker.score)
 	
 	# Sync deaths count to all clients
 	_sync_deaths.rpc(player_id, player.deaths)
@@ -923,6 +929,13 @@ func _sync_deaths(player_id: int, deaths: int):
 	if player:
 		player.deaths = deaths
 
+@rpc("authority", "call_local", "reliable")
+func _sync_score(player_id: int, score: int):
+	"""Sync score/kills count to all clients"""
+	var player = get_player(player_id)
+	if player:
+		player.score = score
+
 # Send hill to a single newly-connected peer (called by NetworkManager)
 func _sync_hill_to_peer(peer_id: int):
 	"""Send current hill state to a specific peer"""
@@ -942,3 +955,11 @@ func _sync_deaths_to_peer(peer_id: int):
 		for player in players:
 			if player.deaths > 0:
 				rpc_id(peer_id, "_sync_deaths", player.player_id, player.deaths)
+
+# Send scores to a single newly-connected peer (called by NetworkManager)
+func _sync_score_to_peer(peer_id: int):
+	"""Send current score/kills count to a specific peer"""
+	if multiplayer.is_server():
+		for player in players:
+			if player.score > 0:
+				rpc_id(peer_id, "_sync_score", player.player_id, player.score)
