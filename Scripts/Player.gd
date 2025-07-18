@@ -24,6 +24,7 @@ var projectile_scene = preload("res://Scenes/Projectile.tscn")
 @export var score : int = 0
 @export var oddball_score : int = 0
 @export var koth_score : int = 0
+@export var deaths : int = 0
 @export var lives_remaining : int = 3
 var last_attacker_id : int
 var is_alive : bool = true
@@ -87,8 +88,8 @@ func _ready():
 	
 	# Set initial lives from game config
 	if game_manager:
-		if game_manager.koth_mode:
-			lives_remaining = 999  # Effectively unlimited lives for KOTH
+		if game_manager.koth_mode or game_manager.game_mode == "Slayer":
+			lives_remaining = 999  # Effectively unlimited lives for KOTH and Slayer
 		else:
 			lives_remaining = game_manager.player_lives
 	
@@ -199,19 +200,22 @@ func die ():
 	# Drop skull if holding it in oddball mode
 	game_manager.drop_skull_on_death(self)
 	
-	# In oddball mode or KOTH mode, don't lose lives
-	if not game_manager.oddball_mode and not game_manager.koth_mode:
+	# Always increment deaths counter
+	deaths += 1
+	
+	# In oddball mode, KOTH mode, or Slayer mode, don't lose lives
+	if not game_manager.oddball_mode and not game_manager.koth_mode and game_manager.game_mode != "Slayer":
 		lives_remaining -= 1
 	
 	is_alive = false
 	position = Vector2(0, 9999)
 	
-	# Check if player has lives remaining (always true in oddball mode or KOTH mode)
-	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode:
+	# Check if player has lives remaining (always true in oddball mode, KOTH mode, or Slayer mode)
+	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "Slayer":
 		respawn_timer.start(2)
 		game_manager.on_player_die(player_id, last_attacker_id)
 	else:
-		# Player is eliminated (won't happen in oddball mode or KOTH mode)
+		# Player is eliminated (won't happen in oddball mode, KOTH mode, or Slayer mode)
 		game_manager.on_player_eliminated(player_id, last_attacker_id)
 	
 	die_clients.rpc()
@@ -226,8 +230,8 @@ func die_clients ():
 	audio_player.play()
 
 func respawn ():
-	# Only respawn if player has lives remaining (always true in oddball or KOTH mode)
-	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode:
+	# Only respawn if player has lives remaining (always true in oddball, KOTH, or Slayer mode)
+	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "Slayer":
 		is_alive = true
 		cur_hp = max_hp
 		throttle = 0.0

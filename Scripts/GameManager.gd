@@ -14,6 +14,8 @@ var hearts_enabled : bool = false
 var clouds_enabled : bool = true
 var oddball_mode : bool = false
 var koth_mode : bool = false
+var game_mode : String = ""
+var kill_limit : int = 15
 
 # Heart powerup management
 var heart_scene = preload("res://Scenes/Heart.tscn")
@@ -116,6 +118,8 @@ func apply_server_config(config: Dictionary):
 	clouds_enabled = config.get("clouds_enabled", true)
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
+	game_mode = config.get("game_mode", "")
+	kill_limit = config.get("kill_limit", 15)
 	
 	# Send configuration to all clients
 	if multiplayer.is_server():
@@ -145,10 +149,10 @@ func apply_server_config(config: Dictionary):
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
-	# Update existing players' lives for KOTH mode
+	# Update existing players' lives for KOTH mode and Slayer mode
 	for player in players:
-		if koth_mode:
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH
+		if koth_mode or game_mode == "Slayer":
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and Slayer
 		else:
 			player.lives_remaining = player_lives
 	
@@ -170,6 +174,8 @@ func _apply_server_config_clients(config: Dictionary):
 	clouds_enabled = config.get("clouds_enabled", true)
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
+	game_mode = config.get("game_mode", "")
+	kill_limit = config.get("kill_limit", 15)
 	
 	# Set initial timer value for clients
 	if has_time_limit:
@@ -248,7 +254,9 @@ func _sync_config_to_peer(peer_id: int):
 			"hearts_enabled": hearts_enabled,
 			"clouds_enabled": clouds_enabled,
 			"oddball_mode": oddball_mode,
-			"koth_mode": koth_mode
+			"koth_mode": koth_mode,
+			"game_mode": game_mode,
+			"kill_limit": kill_limit
 		}
 		rpc_id(peer_id, "_apply_server_config_clients", config)
 
@@ -440,7 +448,12 @@ func on_player_die (player_id : int, attacker_id : int):
 	
 	attacker.increase_score(1)
 	
-	# No automatic win based on kill count - only check for last player standing
+	# Check for kill limit win condition in Slayer mode
+	if game_mode == "Slayer" and attacker.score >= kill_limit:
+		end_game_clients.rpc(attacker.player_name + " (Slayer Winner - " + str(kill_limit) + " kills)")
+		return
+	
+	# No automatic win based on kill count for other modes - only check for last player standing
 
 # called when a player is eliminated (no lives remaining)
 func on_player_eliminated (player_id : int, attacker_id : int):
@@ -449,7 +462,16 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	
 	attacker.increase_score(1)
 	
+	# Check for kill limit win condition in Slayer mode
+	if game_mode == "Slayer" and attacker.score >= kill_limit:
+		end_game_clients.rpc(attacker.player_name + " (Slayer Winner - " + str(kill_limit) + " kills)")
+		return
+	
 	print("Player %s eliminated! (Lives remaining: %d)" % [player.player_name, player.lives_remaining])
+	
+	# Don't check for last player standing in Slayer mode (since it has unlimited lives)
+	if game_mode == "Slayer":
+		return
 	
 	# Check if only one player remains alive
 	var alive_players = []
@@ -482,9 +504,10 @@ func reset_game():
 		player.score = 0
 		player.oddball_score = 0
 		player.koth_score = 0
-		# Reset lives to configured amount (use 999 for unlimited in KOTH mode)
-		if koth_mode:
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH
+		player.deaths = 0
+		# Reset lives to configured amount (use 999 for unlimited in KOTH mode and Slayer mode)
+		if koth_mode or game_mode == "Slayer":
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and Slayer
 		else:
 			player.lives_remaining = player_lives
 	

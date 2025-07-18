@@ -9,6 +9,7 @@ var game_manager
 
 var last_oddball_mode = false  # Track mode changes
 var last_koth_mode = false  # Track KOTH mode changes
+var last_game_mode = ""  # Track game mode changes
 
 func _ready():
 	game_manager = get_tree().get_current_scene().get_node("GameManager")
@@ -18,9 +19,10 @@ func _ready():
 
 func _process(delta):
 	# Update headers only when game mode changes
-	if game_manager.oddball_mode != last_oddball_mode or game_manager.koth_mode != last_koth_mode:
+	if game_manager.oddball_mode != last_oddball_mode or game_manager.koth_mode != last_koth_mode or game_manager.game_mode != last_game_mode:
 		last_oddball_mode = game_manager.oddball_mode
 		last_koth_mode = game_manager.koth_mode
+		last_game_mode = game_manager.game_mode
 		
 		if game_manager.koth_mode:
 			header_lives.text = "Score"  # Reuse lives header for KOTH score
@@ -30,6 +32,10 @@ func _process(delta):
 			header_lives.text = "Score"  # Reuse lives header for score in oddball
 			header_kills.text = "Kills"
 			header_score.visible = false  # Don't need separate score column
+		elif game_manager.game_mode == "Slayer":
+			header_lives.text = "Deaths"  # Show deaths for Slayer mode
+			header_kills.text = "Kills"
+			header_score.visible = false
 		else:
 			header_lives.text = "Lives"
 			header_kills.text = "Kills"
@@ -62,6 +68,8 @@ func _process(delta):
 			lives_label.text = str(player.koth_score)  # Show KOTH score
 		elif game_manager.oddball_mode:
 			lives_label.text = str(player.oddball_score)  # Show oddball score
+		elif game_manager.game_mode == "Slayer":
+			lives_label.text = str(player.deaths)  # Show deaths for Slayer mode
 		else:
 			lives_label.text = str(player.lives_remaining)  # Show lives
 		lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
