@@ -6,6 +6,8 @@ class_name Player
 	set(id):
 		player_id = id
 		$InputSynchronizer.set_multiplayer_authority(id)
+		# Server has authority over player position and state
+		$PlayerSynchronizer.set_multiplayer_authority(1)  # Server is always ID 1
 		_set_ship_sprite() # Add this line
 
 @export var base_max_speed : float = 150.0  # Base speed before multiplier
@@ -101,7 +103,14 @@ func _ready():
 		set_player_name.rpc(network_manager.local_username)
 	
 	if multiplayer.is_server():
+		# Small delay to ensure multiplayer authority is set
+		await get_tree().process_frame
 		position = game_manager.get_random_position()
+		rotation = randf() * 2 * PI  # Random initial rotation
+		print("Player %d spawned at position: %s, rotation: %s" % [player_id, position, rotation])
+		
+		# Sync initial transform to all clients
+		_sync_transform.rpc(position, rotation)
 
 func _apply_speed_multiplier():
 	"""Apply the speed multiplier from game configuration"""
@@ -143,6 +152,10 @@ func _move (delta):
 	velocity = -transform.y * throttle * max_speed
 	
 	move_and_slide()
+	
+	# Force position and rotation sync for all clients
+	if velocity.length() > 0 or abs(input.turn_input) > 0:
+		_sync_transform.rpc(position, rotation)
 
 func _try_shoot ():
 	if not input.shoot_input:
@@ -237,7 +250,10 @@ func respawn ():
 		throttle = 0.0
 		last_attacker_id = 0
 		position = game_manager.get_random_position()
-		rotation = 0
+		rotation = randf() * 2 * PI  # Random respawn rotation
+		
+		# Sync respawn transform to all clients
+		_sync_transform.rpc(position, rotation)
 
 func _manage_weapon_heat (delta):
 	if cur_weapon_heat < max_weapon_heat:
@@ -258,17 +274,32 @@ func _manage_weapon_heat (delta):
 
 # loop around when we leave the screen
 func _check_border ():
+	var wrapped = false
 	if position.x < border_min_x:
 		position.x = border_max_x
+		wrapped = true
 	if position.x > border_max_x:
 		position.x = border_min_x
+		wrapped = true
 	if position.y < border_min_y:
 		position.y = border_max_y
+		wrapped = true
 	if position.y > border_max_y:
 		position.y = border_min_y
+		wrapped = true
+	
+	# Sync position if player wrapped around
+	if wrapped:
+		_sync_transform.rpc(position, rotation)
 
 func increase_score (amount : int):
 	score += amount
+
+@rpc("reliable")
+func _sync_transform(new_position: Vector2, new_rotation: float):
+	if not multiplayer.is_server():
+		position = new_position
+		rotation = new_rotation
 
 func gain_extra_life():
 	"""Called when player gains an extra life from a heart"""

@@ -206,12 +206,16 @@ func _hide_timer_ui_clients():
 
 func _show_game_ui():
 	"""Show the scoreboard and cooldown UI when game starts"""
+	print("GameManager: Showing game UI")
 	if score_ui:
 		score_ui.visible = true
+		print("ScoreUI shown")
 	if weapon_heat_bar:
 		weapon_heat_bar.visible = true
+		print("WeaponHeatBar shown")
 	if cooldown_label:
 		cooldown_label.visible = true
+		print("CooldownLabel shown")
 
 func _hide_game_ui():
 	"""Hide the scoreboard and cooldown UI when game is not active"""

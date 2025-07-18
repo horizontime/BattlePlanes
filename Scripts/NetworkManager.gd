@@ -11,6 +11,11 @@ var server_config_scene = preload("res://Scenes/ServerConfig.tscn")
 var server_config_ui = null
 var current_server_config = {}
 
+# Lobby scenes
+var ffa_lobby_scene = preload("res://Scenes/FFALobby.tscn")
+var team_lobby_scene = preload("res://Scenes/TeamLobby.tscn")
+var current_lobby = null
+
 var player_scene = preload("res://Scenes/Player.tscn")
 @onready var spawned_nodes = $SpawnedNodes
 
@@ -81,7 +86,7 @@ func start_host ():
 func _on_server_config_confirmed(config: Dictionary):
 	current_server_config = config
 	server_config_ui.visible = false
-	_actually_start_server()
+	_create_lobby_instead_of_server()
 
 # called when user goes back from server config
 func _on_server_config_back():
@@ -92,6 +97,44 @@ func _on_server_config_back():
 	var game_manager = get_tree().current_scene.get_node("GameManager")
 	if game_manager:
 		game_manager._hide_game_ui()
+
+# create and show lobby instead of directly starting server
+func _create_lobby_instead_of_server():
+	# Start the actual server
+	var max_clients = current_server_config.get("max_players", MAX_CLIENTS)
+	
+	var peer = ENetMultiplayerPeer.new()
+	peer.create_server(int(port_input.text), max_clients)
+	multiplayer.multiplayer_peer = peer
+	
+	# Don't connect player_connected yet - lobby will handle this
+	
+	# Show appropriate lobby based on game mode type
+	var mode_type = current_server_config.get("game_mode_type", "ffa")
+	print("Creating lobby for mode type: ", mode_type)
+	var lobby_scene = ffa_lobby_scene if mode_type == "ffa" else team_lobby_scene
+	
+	current_lobby = lobby_scene.instantiate()
+	current_lobby.z_index = 100  # Make sure lobby is above NetworkUI
+	get_tree().current_scene.add_child(current_lobby)
+	print("Lobby created and added to scene")
+	
+	# Hide network UI and show lobby
+	network_ui.visible = false
+	current_lobby.visible = true
+	
+	# Force position the lobby to center of screen
+	current_lobby.position = Vector2.ZERO
+	
+	# Connect lobby signals
+	current_lobby.lobby_closed.connect(_on_lobby_closed)
+	current_lobby.game_started.connect(_on_game_started_from_lobby)
+	
+	# Initialize lobby
+	current_lobby.initialize_lobby(current_server_config, mode_type)
+	
+	# Notify any clients that might join later
+	multiplayer.peer_connected.connect(_on_player_connected_to_lobby)
 
 # actually create the server with the configured settings
 func _actually_start_server():
@@ -110,6 +153,52 @@ func _actually_start_server():
 		game_manager.apply_server_config(current_server_config)
 	
 	_on_player_connected(multiplayer.get_unique_id())
+
+# called when lobby is closed (back button or disconnect)
+func _on_lobby_closed():
+	print("Lobby closed")
+	if current_lobby:
+		current_lobby.queue_free()
+		current_lobby = null
+	
+	# Return to main menu
+	network_ui.visible = true
+	
+	# Close multiplayer connection
+	if multiplayer.multiplayer_peer:
+		multiplayer.multiplayer_peer.close()
+		multiplayer.multiplayer_peer = null
+
+# called when host starts game from lobby
+func _on_game_started_from_lobby():
+	print("Game started from lobby")
+	
+	# Disconnect lobby connection handler
+	if multiplayer.peer_connected.is_connected(_on_player_connected_to_lobby):
+		multiplayer.peer_connected.disconnect(_on_player_connected_to_lobby)
+	
+	# Now connect the actual game server signals
+	multiplayer.peer_connected.connect(_on_player_connected)
+	multiplayer.peer_disconnected.connect(_on_player_disconnected)
+	
+	# Tell all clients to transition to game
+	_transition_to_game.rpc()
+	
+	# Spawn players that are already connected
+	var all_players = multiplayer.get_peers()
+	all_players.append(multiplayer.get_unique_id())
+	
+	for player_id in all_players:
+		_on_player_connected(player_id)
+
+# called when a player connects to the lobby (server only)
+func _on_player_connected_to_lobby(id: int):
+	print("Player %d connected to lobby" % id)
+	
+	# Send lobby state to the new player
+	var mode_type = current_server_config.get("game_mode_type", "ffa")
+	print("Sending lobby state to player %d, mode: %s" % [id, mode_type])
+	_create_client_lobby.rpc_id(id, current_server_config, mode_type)
 
 # join a multiplayer game
 func start_client ():
@@ -130,10 +219,16 @@ func start_client ():
 func _on_player_connected (id : int):
 	print("Player %s joined the game." % id)
 	
+	# Check if player already exists
+	if spawned_nodes.has_node(str(id)):
+		print("Player %s already exists, skipping spawn" % id)
+		return
+	
 	var player = player_scene.instantiate()
 	player.name = str(id)
 	player.player_id = id
 	spawned_nodes.add_child(player, true)
+	print("Player %s spawned successfully" % id)
 
 	# If a heart currently exists, instruct server to send it to the new peer so they can see it
 	if multiplayer.is_server():
@@ -171,10 +266,8 @@ func _connected_to_server ():
 	print("Connected to server.")
 	network_ui.visible = false
 	
-	# Show game UI when client connects to server
-	var game_manager = get_tree().current_scene.get_node("GameManager")
-	if game_manager:
-		game_manager._show_game_ui()
+	# Client will receive lobby state from server - wait for it
+	# The lobby will be created when we receive the lobby state
 
 # called on the CLIENT when connection to a server has failed
 func _connection_failed ():
@@ -198,6 +291,11 @@ func _server_disconnected ():
 	# Hide server config if it's visible
 	if server_config_ui:
 		server_config_ui.visible = false
+	
+	# Close lobby if it's open
+	if current_lobby:
+		current_lobby.queue_free()
+		current_lobby = null
 
 func _on_username_input_text_changed(new_text):
 	if new_text.length() > 10:
@@ -217,3 +315,52 @@ func _on_port_input_text_changed(new_text):
 
 func get_server_config() -> Dictionary:
 	return current_server_config
+
+# RPC functions for lobby management
+@rpc("reliable")
+func _create_client_lobby(config: Dictionary, mode_type: String):
+	print("Creating client lobby for mode: ", mode_type)
+	current_server_config = config
+	
+	# Create appropriate lobby scene
+	var lobby_scene = ffa_lobby_scene if mode_type == "ffa" else team_lobby_scene
+	current_lobby = lobby_scene.instantiate()
+	current_lobby.z_index = 100  # Make sure lobby is above NetworkUI
+	get_tree().current_scene.add_child(current_lobby)
+	print("Client lobby created and added to scene")
+	
+	# Make sure lobby is visible
+	current_lobby.visible = true
+	
+	# Force position the lobby to center of screen
+	current_lobby.position = Vector2.ZERO
+	
+	# Connect lobby signals
+	current_lobby.lobby_closed.connect(_on_lobby_closed)
+	current_lobby.game_started.connect(_on_game_started_from_lobby)
+	
+	# Initialize lobby
+	current_lobby.initialize_lobby(config, mode_type)
+
+@rpc("call_local", "reliable")
+func _transition_to_game():
+	print("Transitioning from lobby to game")
+	if current_lobby:
+		current_lobby.visible = false  # Hide immediately
+		current_lobby.queue_free()
+		current_lobby = null
+	
+	# Make sure NetworkUI is hidden
+	network_ui.visible = false
+	
+	# Show game UI
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._show_game_ui()
+		if multiplayer.is_server():
+			game_manager.apply_server_config(current_server_config)
+			# Show timer UI if game has time limit
+			if game_manager.has_time_limit:
+				game_manager._show_timer_ui()
+	
+	print("Game transition completed")
