@@ -591,7 +591,7 @@ func _spawn_skull():
 	print("[Skull] Server spawning skull...")
 	
 	current_skull = skull_scene.instantiate()
-	current_skull.position = get_random_position()
+	current_skull.position = Vector2(0, 0)  # Spawn at center of map
 	current_skull.skull_picked_up.connect(_on_skull_picked_up)
 	current_skull.skull_dropped.connect(_on_skull_dropped)
 	
