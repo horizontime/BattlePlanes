@@ -3,6 +3,10 @@ extends Node
 var players : Array[Player]
 var local_player : Player
 
+# Team management for team-based game modes
+var team_assignments: Dictionary = {}  # player_id -> team (0 = Team A, 1 = Team B)
+var is_team_mode: bool = false
+
 # Game configuration settings
 var player_lives : int = 3
 var max_players : int = 4
@@ -458,6 +462,81 @@ func get_random_position () -> Vector2:
 	var x = randf_range(min_x + padding, max_x - padding)
 	var y = randf_range(min_y + padding, max_y - padding)
 	return Vector2(x, y)
+
+func get_team_spawn_position(team: int) -> Vector2:
+	"""Get spawn position for team-based modes"""
+	var padding := 40.0
+	var team_players = []
+	
+	# Count existing players on this team
+	for player in players:
+		if player.team == team:
+			team_players.append(player)
+	
+	var spawn_index = team_players.size()  # Position for the new player
+	
+	if team == 0:  # Team A - left half
+		var x = min_x + padding + 60  # Fixed x position on left side
+		var available_height = (max_y - padding) - (min_y + padding)
+		var spacing = available_height / max(1, max_players / 2)  # Divide height by max team size
+		var y = min_y + padding + (spawn_index + 0.5) * spacing
+		y = clamp(y, min_y + padding, max_y - padding)
+		return Vector2(x, y)
+	else:  # Team B - right half
+		var x = max_x - padding - 60  # Fixed x position on right side
+		var available_height = (max_y - padding) - (min_y + padding)
+		var spacing = available_height / max(1, max_players / 2)  # Divide height by max team size
+		var y = min_y + padding + (spawn_index + 0.5) * spacing
+		y = clamp(y, min_y + padding, max_y - padding)
+		return Vector2(x, y)
+
+func set_team_assignments(assignments: Dictionary):
+	"""Set team assignments from lobby"""
+	team_assignments = assignments.duplicate()
+	is_team_mode = true
+	
+	# Broadcast to all clients
+	if multiplayer.is_server():
+		_sync_team_assignments.rpc(team_assignments)
+	
+	# Apply team assignments to existing players
+	for player in players:
+		if team_assignments.has(player.player_id):
+			player.team = team_assignments[player.player_id]
+		else:
+			# Auto-assign to team with fewer players
+			player.team = _auto_assign_team(player.player_id)
+
+func _auto_assign_team(player_id: int) -> int:
+	"""Auto-assign player to team with fewer members"""
+	var team_a_count = 0
+	var team_b_count = 0
+	
+	for id in team_assignments:
+		if team_assignments[id] == 0:
+			team_a_count += 1
+		else:
+			team_b_count += 1
+	
+	var assigned_team = 0 if team_a_count <= team_b_count else 1
+	team_assignments[player_id] = assigned_team
+	return assigned_team
+
+@rpc("authority", "call_local", "reliable")
+func _sync_team_assignments(assignments: Dictionary):
+	"""Sync team assignments to all clients"""
+	team_assignments = assignments.duplicate()
+	is_team_mode = assignments.size() > 0
+	
+	# Apply to existing players
+	for player in players:
+		if team_assignments.has(player.player_id):
+			player.team = team_assignments[player.player_id]
+
+func _sync_team_to_peer(peer_id: int):
+	"""Sync team assignments to a specific peer"""
+	if multiplayer.is_server() and is_team_mode:
+		rpc_id(peer_id, "_sync_team_assignments", team_assignments)
 
 # called when a player is killed (but still has lives)
 func on_player_die (player_id : int, attacker_id : int):

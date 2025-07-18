@@ -10,6 +10,12 @@ class_name Player
 		$PlayerSynchronizer.set_multiplayer_authority(1)  # Server is always ID 1
 		_set_ship_sprite() # Add this line
 
+# Team assignment (0 = Team A, 1 = Team B, -1 = no team/FFA)
+@export var team : int = -1:
+	set(new_team):
+		team = new_team
+		_set_ship_sprite()
+
 @export var base_max_speed : float = 150.0  # Base speed before multiplier
 @export var max_speed : float = 150.0  # Actual speed with multiplier applied
 @export var turn_rate : float = 2.5
@@ -44,8 +50,15 @@ var health_bar : HealthBar = null
 
 # Add this new function
 func _set_ship_sprite():
-	# Calculate which ship sprite to use based on player ID
-	var ship_index = (player_id - 1) % 24  # Cycle through ships 0-23
+	var ship_index = 0  # Default to ship_0000.png
+	
+	if team >= 0:
+		# Team mode: Team A (0) uses ship_0000.png, Team B (1) uses ship_0001.png
+		ship_index = team
+	else:
+		# Non-team mode: use variety based on player ID
+		ship_index = (player_id - 1) % 24  # Cycle through ships 0-23
+	
 	var ship_texture_path = "res://Sprites/Ships/ship_%04d.png" % ship_index
 	
 	# Load the texture
@@ -95,7 +108,16 @@ var game_manager
 func _ready():
 	game_manager = get_tree().get_current_scene().get_node("GameManager")
 	game_manager.players.append(self)
-	# Set the ship sprite when ready
+	
+	# Set team assignment if in team mode
+	if game_manager.is_team_mode:
+		if game_manager.team_assignments.has(player_id):
+			team = game_manager.team_assignments[player_id]
+		else:
+			# Auto-assign for mid-match joins
+			team = game_manager._auto_assign_team(player_id)
+	
+	# Set the ship sprite when ready (after team assignment)
 	_set_ship_sprite()
 	
 	# Apply speed multiplier from game config
@@ -116,8 +138,11 @@ func _ready():
 		set_player_name.rpc(network_manager.local_username)
 	
 	if multiplayer.is_server():
-		# Assign a random spawn position immediately to avoid starting at (0,0)
-		position = game_manager.get_random_position()
+		# Assign spawn position based on team mode
+		if game_manager.is_team_mode and team >= 0:
+			position = game_manager.get_team_spawn_position(team)
+		else:
+			position = game_manager.get_random_position()
 		rotation = randf() * 2 * PI  # Random initial rotation
 
 		# Set a short immunity period where pickups are disabled
@@ -277,7 +302,11 @@ func respawn ():
 		cur_hp = max_hp
 		throttle = 0.0
 		last_attacker_id = 0
-		position = game_manager.get_random_position()
+		# Use team spawn if in team mode, otherwise random spawn
+		if game_manager.is_team_mode and team >= 0:
+			position = game_manager.get_team_spawn_position(team)
+		else:
+			position = game_manager.get_random_position()
 		rotation = randf() * 2 * PI  # Random respawn rotation
 		sprite.visible = true  # Show sprite on server
 		
