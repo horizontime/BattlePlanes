@@ -5,6 +5,7 @@ const MAX_CLIENTS : int = 4
 @onready var network_ui = $NetworkUI
 @onready var ip_input = $NetworkUI/VBoxContainer/IPInput
 @onready var port_input = $NetworkUI/VBoxContainer/PortInput
+@onready var username_input = $NetworkUI/VBoxContainer/UsernameInput
 
 # Server configuration
 var server_config_scene = preload("res://Scenes/ServerConfig.tscn")
@@ -63,10 +64,42 @@ func _show_port_error(message: String):
 	port_input.modulate = Color.WHITE
 	port_input.placeholder_text = "Port..."
 
+# Validate if the username input is valid
+func _is_valid_username() -> bool:
+	var username_text = username_input.text.strip_edges()
+	
+	# Check if username is empty
+	if username_text.is_empty():
+		_show_username_error("Username is required! Please enter a username.")
+		return false
+	
+	# Check if username is too short
+	if username_text.length() < 1:
+		_show_username_error("Username must be at least 1 characters!")
+		return false
+	
+	return true
+
+# Show username validation error message
+func _show_username_error(message: String):
+	print("Username Error: " + message)
+	# Highlight the username input to draw attention
+	username_input.modulate = Color.RED
+	username_input.placeholder_text = message
+	username_input.text = ""
+	
+	# Reset the highlight after 3 seconds
+	await get_tree().create_timer(3.0).timeout
+	username_input.modulate = Color.WHITE
+	username_input.placeholder_text = "Type a username..."
+
 # show server configuration menu instead of immediately starting
 func start_host ():
-	# Validate port before proceeding
+	# Validate port and username before proceeding
 	if not _is_valid_port():
+		return
+	
+	if not _is_valid_username():
 		return
 	
 	# Create and show server configuration UI
@@ -202,8 +235,11 @@ func _on_player_connected_to_lobby(id: int):
 
 # join a multiplayer game
 func start_client ():
-	# Validate port before proceeding
+	# Validate port and username before proceeding
 	if not _is_valid_port():
+		return
+	
+	if not _is_valid_username():
 		return
 	
 	var peer = ENetMultiplayerPeer.new()
