@@ -67,7 +67,7 @@ var explode_sfx = preload("res://Audio/PlaneExplode.wav")
 @export var cur_weapon_heat : float = 0.0
 @export var max_weapon_heat : float = 100.0
 var weapon_heat_increase_rate : float = 7.0
-var weapon_heat_cool_rate : float = 25.0
+var weapon_heat_cool_rate : float = 37.5
 var weapon_heat_cap_wait_time : float = 1.5
 var weapon_heat_waiting : bool = false
 
