@@ -17,11 +17,13 @@ class_name ServerConfig
 
 # UI References - Free-for-all Tab
 @onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatch"
+@onready var last_man_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastManStanding"
 @onready var oddball_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/Oddball"
 @onready var koth_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHill"
 
 # UI References - Free-for-all Descriptions
 @onready var classic_deathmatch_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc"
+@onready var last_man_standing_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastManStandingDesc"
 @onready var oddball_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/OddballDesc"
 @onready var koth_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc"
 
@@ -58,16 +60,27 @@ signal back_to_main_menu
 
 # Preset game modes
 var ffa_presets = {
-	"Classic Deathmatch": {
-		"player_lives": 3,
+	"Slayer": {
+		"player_lives": -1,
 		"max_players": 6,
 		"speed_multiplier": 1.0,
 		"damage_multiplier": 1.0,
-		"has_time_limit": false,
+		"has_time_limit": true,
+		"time_limit_minutes": 5,
+		"kill_limit": 15,
 		"hearts_enabled": false,
 		"clouds_enabled": true
 	},
-
+	"Last Man Standing": {
+		"player_lives": 7,
+		"max_players": 8,
+		"speed_multiplier": 1.0,
+		"damage_multiplier": 1.0,
+		"has_time_limit": true,
+		"time_limit_minutes": 5,
+		"hearts_enabled": false,
+		"clouds_enabled": true
+	},
 	"Oddball": {
 		"player_lives": 3,
 		"max_players": 6,
@@ -118,8 +131,9 @@ var team_presets = {
 
 # Game mode descriptions
 var ffa_descriptions = {
-	"Classic Deathmatch": "Standard dogfight action\n• 3 Lives per player\n• Up to 6 players\n• No time limit\n• Classic combat experience",
-	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Drop skull when killed",
+	"Slayer": "Fast-paced elimination combat\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 15 kills wins",
+	"Last Man Standing": "Survival-based elimination mode\n• 7 Lives per player\n• Up to 8 players\n• 5 minute time limit\n• Last player alive wins",
+	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Skull dropped when killed",
 	"King of the Hill": "Control the hill to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Hill moves every 30 seconds"
 }
 
@@ -157,7 +171,8 @@ func _ready():
 	koth_checkbox.toggled.connect(_on_koth_toggled)
 	
 	# Connect signals - FFA tab
-	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Classic Deathmatch", "ffa"))
+	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Slayer", "ffa"))
+	last_man_standing_btn.pressed.connect(_on_game_mode_selected.bind("Last Man Standing", "ffa"))
 	oddball_btn.pressed.connect(_on_game_mode_selected.bind("Oddball", "ffa"))
 	koth_btn.pressed.connect(_on_game_mode_selected.bind("King of the Hill", "ffa"))
 	
@@ -242,6 +257,7 @@ func _on_game_mode_selected(mode_name: String, mode_type: String):
 func _hide_all_descriptions():
 	# Hide FFA descriptions
 	classic_deathmatch_desc.visible = false
+	last_man_standing_desc.visible = false
 	oddball_desc.visible = false
 	koth_desc.visible = false
 	
@@ -257,8 +273,10 @@ func _show_description(mode_name: String, mode_type: String):
 	if mode_type == "ffa":
 		description_text = ffa_descriptions[mode_name]
 		match mode_name:
-			"Classic Deathmatch":
+			"Slayer":
 				description_container = classic_deathmatch_desc
+			"Last Man Standing":
+				description_container = last_man_standing_desc
 			"Oddball":
 				description_container = oddball_desc
 			"King of the Hill":
