@@ -287,6 +287,7 @@ func _on_player_connected (id : int):
 			game_manager._sync_timer_to_peer(id)
 			game_manager._sync_deaths_to_peer(id)
 			game_manager._sync_score_to_peer(id)
+			game_manager._sync_game_ui_to_peer(id)
 
 # called on the SERVER when a player leaves
 # destroy their plane object

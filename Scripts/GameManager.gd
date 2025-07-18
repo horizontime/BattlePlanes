@@ -207,6 +207,11 @@ func _hide_timer_ui_clients():
 	if timer_ui:
 		timer_ui.visible = false
 
+@rpc("authority", "call_local", "reliable")
+func _show_game_ui_clients():
+	"""Show the game UI (scoreboard, weapon heat) on all clients"""
+	_show_game_ui()
+
 func _show_game_ui():
 	"""Show the scoreboard and cooldown UI when game starts"""
 	print("GameManager: Showing game UI")
@@ -276,6 +281,12 @@ func _sync_timer_to_peer(peer_id: int):
 			rpc_id(peer_id, "_update_timer_display_clients", time_limit_seconds)
 		else:
 			rpc_id(peer_id, "_hide_timer_ui_clients")
+
+# Send game UI state to a newly connected peer
+func _sync_game_ui_to_peer(peer_id: int):
+	"""Show the game UI for a specific peer"""
+	if multiplayer.is_server():
+		rpc_id(peer_id, "_show_game_ui_clients")
 
 func _update_timer_display():
 	"""Update the timer display with current time remaining"""
