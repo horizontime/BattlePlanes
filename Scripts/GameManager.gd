@@ -145,6 +145,13 @@ func apply_server_config(config: Dictionary):
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
+	# Update existing players' lives for KOTH mode
+	for player in players:
+		if koth_mode:
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH
+		else:
+			player.lives_remaining = player_lives
+	
 	# Show game UI elements now that the game has started
 	_show_game_ui()
 	
@@ -475,8 +482,11 @@ func reset_game():
 		player.score = 0
 		player.oddball_score = 0
 		player.koth_score = 0
-		# Reset lives to configured amount
-		player.lives_remaining = player_lives
+		# Reset lives to configured amount (use 999 for unlimited in KOTH mode)
+		if koth_mode:
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH
+		else:
+			player.lives_remaining = player_lives
 	
 	# Reset time limit
 	if has_time_limit:

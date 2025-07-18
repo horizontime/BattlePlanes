@@ -87,7 +87,10 @@ func _ready():
 	
 	# Set initial lives from game config
 	if game_manager:
-		lives_remaining = game_manager.player_lives
+		if game_manager.koth_mode:
+			lives_remaining = 999  # Effectively unlimited lives for KOTH
+		else:
+			lives_remaining = game_manager.player_lives
 	
 	# do we control this player?
 	if $InputSynchronizer.is_multiplayer_authority():
@@ -223,8 +226,8 @@ func die_clients ():
 	audio_player.play()
 
 func respawn ():
-	# Only respawn if player has lives remaining
-	if lives_remaining > 0:
+	# Only respawn if player has lives remaining (always true in oddball or KOTH mode)
+	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode:
 		is_alive = true
 		cur_hp = max_hp
 		throttle = 0.0
