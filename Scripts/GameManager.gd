@@ -448,6 +448,9 @@ func on_player_die (player_id : int, attacker_id : int):
 	
 	attacker.increase_score(1)
 	
+	# Sync deaths count to all clients
+	_sync_deaths.rpc(player_id, player.deaths)
+	
 	# Check for kill limit win condition in Slayer mode
 	if game_mode == "Slayer" and attacker.score >= kill_limit:
 		end_game_clients.rpc(attacker.player_name + " (Slayer Winner - " + str(kill_limit) + " kills)")
@@ -461,6 +464,9 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	var attacker : Player = get_player(attacker_id)
 	
 	attacker.increase_score(1)
+	
+	# Sync deaths count to all clients
+	_sync_deaths.rpc(player_id, player.deaths)
 	
 	# Check for kill limit win condition in Slayer mode
 	if game_mode == "Slayer" and attacker.score >= kill_limit:
@@ -903,6 +909,13 @@ func _sync_koth_score(player_id: int, score: int):
 	if player:
 		player.koth_score = score
 
+@rpc("authority", "call_local", "reliable")
+func _sync_deaths(player_id: int, deaths: int):
+	"""Sync deaths count to all clients"""
+	var player = get_player(player_id)
+	if player:
+		player.deaths = deaths
+
 # Send hill to a single newly-connected peer (called by NetworkManager)
 func _sync_hill_to_peer(peer_id: int):
 	"""Send current hill state to a specific peer"""
@@ -914,3 +927,11 @@ func _sync_hill_to_peer(peer_id: int):
 		for player in players:
 			if player.koth_score > 0:
 				rpc_id(peer_id, "_sync_koth_score", player.player_id, player.koth_score)
+
+# Send deaths to a single newly-connected peer (called by NetworkManager)
+func _sync_deaths_to_peer(peer_id: int):
+	"""Send current deaths count to a specific peer"""
+	if multiplayer.is_server():
+		for player in players:
+			if player.deaths > 0:
+				rpc_id(peer_id, "_sync_deaths", player.player_id, player.deaths)
