@@ -152,10 +152,10 @@ func apply_server_config(config: Dictionary):
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
-	# Update existing players' lives for KOTH mode and Slayer mode
+	# Update existing players' lives for KOTH mode and FFA Slayer mode
 	for player in players:
-		if koth_mode or game_mode == "Slayer":
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and Slayer
+		if koth_mode or game_mode == "FFA Slayer":
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and FFA Slayer
 		else:
 			player.lives_remaining = player_lives
 	
@@ -458,9 +458,9 @@ func on_player_die (player_id : int, attacker_id : int):
 	# Sync deaths count to all clients
 	_sync_deaths.rpc(player_id, player.deaths)
 	
-	# Check for kill limit win condition in Slayer mode
-	if game_mode == "Slayer" and attacker.score >= kill_limit:
-		end_game_clients.rpc(attacker.player_name + " (Slayer Winner - " + str(kill_limit) + " kills)")
+	# Check for kill limit win condition in FFA Slayer mode
+	if game_mode == "FFA Slayer" and attacker.score >= kill_limit:
+		end_game_clients.rpc(attacker.player_name + " (FFA Slayer Winner - " + str(kill_limit) + " kills)")
 		return
 	
 	# No automatic win based on kill count for other modes - only check for last player standing
@@ -475,15 +475,15 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	# Sync deaths count to all clients
 	_sync_deaths.rpc(player_id, player.deaths)
 	
-	# Check for kill limit win condition in Slayer mode
-	if game_mode == "Slayer" and attacker.score >= kill_limit:
-		end_game_clients.rpc(attacker.player_name + " (Slayer Winner - " + str(kill_limit) + " kills)")
+	# Check for kill limit win condition in FFA Slayer mode
+	if game_mode == "FFA Slayer" and attacker.score >= kill_limit:
+		end_game_clients.rpc(attacker.player_name + " (FFA Slayer Winner - " + str(kill_limit) + " kills)")
 		return
 	
 	print("Player %s eliminated! (Lives remaining: %d)" % [player.player_name, player.lives_remaining])
 	
-	# Don't check for last player standing in Slayer mode (since it has unlimited lives)
-	if game_mode == "Slayer":
+	# Don't check for last player standing in FFA Slayer mode (since it has unlimited lives)
+	if game_mode == "FFA Slayer":
 		return
 	
 	# Check if only one player remains alive
@@ -518,9 +518,9 @@ func reset_game():
 		player.oddball_score = 0
 		player.koth_score = 0
 		player.deaths = 0
-		# Reset lives to configured amount (use 999 for unlimited in KOTH mode and Slayer mode)
-		if koth_mode or game_mode == "Slayer":
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and Slayer
+		# Reset lives to configured amount (use 999 for unlimited in KOTH mode and FFA Slayer mode)
+		if koth_mode or game_mode == "FFA Slayer":
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and FFA Slayer
 		else:
 			player.lives_remaining = player_lives
 	

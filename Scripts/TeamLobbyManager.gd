@@ -13,7 +13,8 @@ func _create_player_entry(player_id: int) -> Control:
 	
 	# Player name
 	var name_label = Label.new()
-	name_label.text = "Player " + str(player_id)
+	var display_name = player_names.get(player_id, "Player " + str(player_id))
+	name_label.text = display_name
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_font_size_override("font_size", 14)
 	

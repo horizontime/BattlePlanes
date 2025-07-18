@@ -60,7 +60,7 @@ signal back_to_main_menu
 
 # Preset game modes
 var ffa_presets = {
-	"Slayer": {
+	"FFA Slayer": {
 		"player_lives": -1,
 		"max_players": 6,
 		"speed_multiplier": 1.0,
@@ -131,7 +131,7 @@ var team_presets = {
 
 # Game mode descriptions
 var ffa_descriptions = {
-	"Slayer": "Fast-paced elimination combat\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 15 kills wins",
+	"FFA Slayer": "Fast-paced elimination combat\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 15 kills wins",
 	"Last Man Standing": "Survival-based elimination mode\n• 7 Lives per player\n• Up to 8 players\n• 5 minute time limit\n• Last player alive wins",
 	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Skull dropped when killed",
 	"King of the Hill": "Control the hill to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Hill moves every 30 seconds"
@@ -171,7 +171,7 @@ func _ready():
 	koth_checkbox.toggled.connect(_on_koth_toggled)
 	
 	# Connect signals - FFA tab
-	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Slayer", "ffa"))
+	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("FFA Slayer", "ffa"))
 	last_man_standing_btn.pressed.connect(_on_game_mode_selected.bind("Last Man Standing", "ffa"))
 	oddball_btn.pressed.connect(_on_game_mode_selected.bind("Oddball", "ffa"))
 	koth_btn.pressed.connect(_on_game_mode_selected.bind("King of the Hill", "ffa"))
@@ -273,7 +273,7 @@ func _show_description(mode_name: String, mode_type: String):
 	if mode_type == "ffa":
 		description_text = ffa_descriptions[mode_name]
 		match mode_name:
-			"Slayer":
+			"FFA Slayer":
 				description_container = classic_deathmatch_desc
 			"Last Man Standing":
 				description_container = last_man_standing_desc

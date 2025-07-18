@@ -12,6 +12,7 @@ signal game_started
 
 var server_config: Dictionary = {}
 var connected_players: Dictionary = {}
+var player_names: Dictionary = {}  # Store player names by ID
 var is_host: bool = false
 var lobby_type: String = "ffa"  # "ffa" or "team"
 
@@ -39,7 +40,8 @@ func _ready():
 	if start_game_button:
 		start_game_button.visible = is_host
 	
-	# Update initial player list
+	# Update initial player list and request local player name
+	_request_local_player_name()
 	_update_player_list()
 
 func initialize_lobby(config: Dictionary, type: String):
@@ -48,7 +50,9 @@ func initialize_lobby(config: Dictionary, type: String):
 	lobby_type = type
 	
 	# Set mode display
-	var mode_name = config.get("mode_name", "Unknown")
+	var mode_name = config.get("game_mode", "Custom")
+	if mode_name.is_empty():
+		mode_name = "Custom"
 	if mode_label:
 		mode_label.text = "Mode: " + mode_name
 	
@@ -57,7 +61,18 @@ func initialize_lobby(config: Dictionary, type: String):
 
 func _on_player_joined(id: int):
 	print("Player %d joined lobby" % id)
+	
+	# First, ask all existing players to send their names to ensure we have them
+	if multiplayer.is_server():
+		_refresh_all_player_names()
+		# Wait a frame for name requests to be processed
+		await get_tree().process_frame
+	
+	# Then sync lobby state to new player (which will include all names)
 	_sync_lobby_state_to_peer(id)
+	
+	# Request player name from new player
+	_request_player_name.rpc_id(id)
 	_update_player_list()
 	_update_player_count()
 
@@ -65,6 +80,8 @@ func _on_player_left(id: int):
 	print("Player %d left lobby" % id)
 	if connected_players.has(id):
 		connected_players.erase(id)
+	if player_names.has(id):
+		player_names.erase(id)
 	_update_player_list()
 	_update_player_count()
 
@@ -100,17 +117,26 @@ func _sync_lobby_state_to_peer(peer_id: int):
 	if not is_host:
 		return
 	
+	print("Syncing lobby state to peer %d with player names: %s" % [peer_id, player_names])
+	
 	# Send lobby configuration to new peer
-	_receive_lobby_state.rpc_id(peer_id, server_config, lobby_type, connected_players.keys())
+	_receive_lobby_state.rpc_id(peer_id, server_config, lobby_type, connected_players.keys(), player_names)
 
 @rpc("reliable")
-func _receive_lobby_state(config: Dictionary, type: String, player_ids: Array):
+func _receive_lobby_state(config: Dictionary, type: String, player_ids: Array, names: Dictionary = {}):
 	server_config = config
 	lobby_type = type
 	
 	# Update player list from server
 	for pid in player_ids:
 		connected_players[pid] = true
+	
+	# Update player names from server
+	player_names = names
+	print("Received player names: ", player_names)
+	
+	# Send our own name to the server
+	_request_local_player_name()
 	
 	_update_player_list()
 	_update_player_count()
@@ -137,7 +163,8 @@ func _create_player_entry(player_id: int) -> Control:
 	
 	# Player name
 	var name_label = Label.new()
-	name_label.text = "Player " + str(player_id)
+	var display_name = player_names.get(player_id, "Player " + str(player_id))
+	name_label.text = display_name
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_font_size_override("font_size", 14)
 	
@@ -168,3 +195,72 @@ func _update_player_count():
 	var max_count = server_config.get("max_players", 4)
 	if player_count_label:
 		player_count_label.text = "Players: %d/%d" % [current_count, max_count]
+
+func _request_local_player_name():
+	var network_manager = get_tree().current_scene.get_node("Network")
+	if network_manager:
+		var username = network_manager.local_username
+		if username.is_empty():
+			username = _generate_default_name()
+		player_names[multiplayer.get_unique_id()] = username
+		# Send to server if we're a client, or broadcast if we're the server
+		if not multiplayer.is_server():
+			_send_player_name.rpc_id(1, multiplayer.get_unique_id(), username)
+		else:
+			# Server broadcasts their own name to all clients
+			_update_player_name.rpc(multiplayer.get_unique_id(), username)
+
+@rpc("any_peer", "reliable")
+func _request_player_name():
+	# Called on clients to request their name
+	var network_manager = get_tree().current_scene.get_node("Network")
+	if network_manager:
+		var username = network_manager.local_username
+		if username.is_empty():
+			username = _generate_default_name()
+		_send_player_name.rpc_id(1, multiplayer.get_unique_id(), username)
+
+
+
+@rpc("any_peer", "reliable")
+func _send_player_name(player_id: int, name: String):
+	# Called on server to receive a player's name
+	if multiplayer.is_server():
+		player_names[player_id] = name
+		# Broadcast updated name to all clients
+		_update_player_name.rpc(player_id, name)
+		_update_player_list()
+
+@rpc("reliable")
+func _update_player_name(player_id: int, name: String):
+	# Called on all clients to update a player's name
+	player_names[player_id] = name
+	_update_player_list()
+
+func _refresh_all_player_names():
+	# Called on server to ensure we have names for all current players
+	if not multiplayer.is_server():
+		return
+		
+	# Make sure we have the server's own name
+	var network_manager = get_tree().current_scene.get_node("Network")
+	if network_manager:
+		var username = network_manager.local_username
+		if username.is_empty():
+			username = _generate_default_name()
+		player_names[1] = username  # Server is always ID 1
+	
+	# Request names from all connected clients
+	var all_players = multiplayer.get_peers()
+	for player_id in all_players:
+		if not player_names.has(player_id):
+			# We don't have this player's name, request it
+			_request_player_name.rpc_id(player_id)
+
+func _generate_default_name() -> String:
+	var adjectives = ["Swift", "Bold", "Sharp", "Quick", "Brave", "Wild", "Fast", "Cool", "Hot", "Mega"]
+	var nouns = ["Pilot", "Ace", "Flyer", "Wing", "Bird", "Jet", "Sky", "Star", "Fox", "Hero"]
+	var adj = adjectives[randi() % adjectives.size()]
+	var noun = nouns[randi() % nouns.size()]
+	var num = randi() % 100
+	return (adj + noun + str(num)).substr(0, 10)

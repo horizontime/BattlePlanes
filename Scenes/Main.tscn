@@ -730,7 +730,7 @@ placeholder_text = "IP Address..."
 
 [node name="PortInput" type="LineEdit" parent="Network/NetworkUI/VBoxContainer"]
 layout_mode = 2
-placeholder_text = "Port... (1024-65535)"
+placeholder_text = "Port... (1024 - 65535)"
 
 [node name="UsernameInput" type="LineEdit" parent="Network/NetworkUI/VBoxContainer"]
 layout_mode = 2

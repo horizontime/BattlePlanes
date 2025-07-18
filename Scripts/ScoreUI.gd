@@ -32,8 +32,8 @@ func _process(delta):
 			header_lives.text = "Score"  # Reuse lives header for score in oddball
 			header_kills.text = "Kills"
 			header_score.visible = false  # Don't need separate score column
-		elif game_manager.game_mode == "Slayer":
-			header_lives.text = "Deaths"  # Show deaths for Slayer mode
+		elif game_manager.game_mode == "FFA Slayer":
+			header_lives.text = "Deaths"  # Show deaths for FFA Slayer mode
 			header_kills.text = "Kills"
 			header_score.visible = false
 		else:
@@ -68,8 +68,8 @@ func _process(delta):
 			lives_label.text = str(player.koth_score)  # Show KOTH score
 		elif game_manager.oddball_mode:
 			lives_label.text = str(player.oddball_score)  # Show oddball score
-		elif game_manager.game_mode == "Slayer":
-			lives_label.text = str(player.deaths)  # Show deaths for Slayer mode
+		elif game_manager.game_mode == "FFA Slayer":
+			lives_label.text = str(player.deaths)  # Show deaths for FFA Slayer mode
 		else:
 			lives_label.text = str(player.lives_remaining)  # Show lives
 		lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -43,7 +43,7 @@ func _is_valid_port() -> bool:
 	
 	var port_number = port_text.to_int()
 	
-	# Check if port is in valid range (1024-65535 for user applications)
+	# Check if port is in valid range (1024 - 65535 for user applications)
 	if port_number < 1024 or port_number > 65535:
 		_show_port_error("Port must be between 1024 and 65535!")
 		return false

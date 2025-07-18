@@ -24,7 +24,7 @@ The lobby system provides a waiting area for players before starting a game. Pla
 
 ### FFA Lobby
 - Shows all players in a single list
-- Used for: Slayer, Last Man Standing, Oddball, King of the Hill
+- Used for: FFA Slayer, Last Man Standing, Oddball, King of the Hill
 - Players compete individually
 
 ### Team Lobby

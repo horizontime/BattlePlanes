@@ -121,7 +121,7 @@ theme_override_constants/separation = 5
 
 [node name="ClassicDeathmatch" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
 layout_mode = 2
-text = "Slayer"
+text = "FFA Slayer"
 
 [node name="ClassicDeathmatchDesc" type="VBoxContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
 visible = false
