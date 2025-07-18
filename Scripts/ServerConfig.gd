@@ -13,6 +13,7 @@ class_name ServerConfig
 @onready var hearts_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/HeartsContainer/HeartsCheckBox
 @onready var clouds_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/CloudsContainer/CloudsCheckBox
 @onready var oddball_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer/OddballCheckBox
+@onready var koth_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/KOTHContainer/KOTHCheckBox
 
 # UI References - Free-for-all Tab
 @onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatch"
@@ -20,6 +21,7 @@ class_name ServerConfig
 @onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStanding"
 @onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatch"
 @onready var oddball_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/Oddball"
+@onready var koth_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHill"
 
 # UI References - Free-for-all Descriptions
 @onready var classic_deathmatch_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc"
@@ -27,6 +29,7 @@ class_name ServerConfig
 @onready var last_plane_standing_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc"
 @onready var quick_match_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc"
 @onready var oddball_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/OddballDesc"
+@onready var koth_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc"
 
 # UI References - Team Modes Tab
 @onready var team_deathmatch_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch"
@@ -55,6 +58,7 @@ var time_limit_minutes: int = 5
 var hearts_enabled: bool = false
 var clouds_enabled: bool = true
 var oddball_mode: bool = false
+var koth_mode: bool = false
 var selected_game_mode: String = ""
 var game_mode_type: String = ""  # "ffa", "team", or "custom"
 
@@ -112,6 +116,17 @@ var ffa_presets = {
 		"hearts_enabled": false,
 		"clouds_enabled": true,
 		"oddball_mode": true
+	},
+	"King of the Hill": {
+		"player_lives": -1,  # Unlimited lives
+		"max_players": 6,
+		"speed_multiplier": 1.0,
+		"damage_multiplier": 1.0,
+		"has_time_limit": true,
+		"time_limit_minutes": 5,
+		"hearts_enabled": false,
+		"clouds_enabled": true,
+		"koth_mode": true
 	}
 }
 
@@ -164,7 +179,8 @@ var ffa_descriptions = {
 	"Timed Combat": "Fast-paced combat with time limit\n• 5 Lives per player\n• Up to 4 players\n• 10 minute time limit\n• 1.2x speed boost\n• Heart powerups enabled",
 	"Last Plane Standing": "Elimination mode - one life only\n• 1 Life per player\n• Up to 8 players\n• No time limit\n• 0.8x speed, 1.5x damage\n• No clouds for better visibility",
 	"Quick Match": "Quick action for casual play\n• 2 Lives per player\n• Up to 4 players\n• 5 minute time limit\n• 1.5x speed, 1.2x damage\n• Heart powerups enabled",
-	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Drop skull when killed"
+	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Drop skull when killed",
+	"King of the Hill": "Control the hill to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Hill moves every 30 seconds"
 }
 
 var team_descriptions = {
@@ -185,6 +201,7 @@ func _ready():
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
 	oddball_checkbox.button_pressed = oddball_mode
+	koth_checkbox.button_pressed = koth_mode
 	
 	# Configure game mode buttons for single-click interaction
 	_configure_game_mode_buttons()
@@ -199,6 +216,7 @@ func _ready():
 	hearts_checkbox.toggled.connect(_on_hearts_toggled)
 	clouds_checkbox.toggled.connect(_on_clouds_toggled)
 	oddball_checkbox.toggled.connect(_on_oddball_toggled)
+	koth_checkbox.toggled.connect(_on_koth_toggled)
 	
 	# Connect signals - FFA tab
 	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Classic Deathmatch", "ffa"))
@@ -206,6 +224,7 @@ func _ready():
 	last_plane_standing_btn.pressed.connect(_on_game_mode_selected.bind("Last Plane Standing", "ffa"))
 	quick_match_btn.pressed.connect(_on_game_mode_selected.bind("Quick Match", "ffa"))
 	oddball_btn.pressed.connect(_on_game_mode_selected.bind("Oddball", "ffa"))
+	koth_btn.pressed.connect(_on_game_mode_selected.bind("King of the Hill", "ffa"))
 	
 	# Connect signals - Team tab
 	team_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Team Deathmatch", "team"))
@@ -262,6 +281,10 @@ func _on_oddball_toggled(pressed: bool):
 	oddball_mode = pressed
 	_mark_as_custom()
 
+func _on_koth_toggled(pressed: bool):
+	koth_mode = pressed
+	_mark_as_custom()
+
 func _on_game_mode_selected(mode_name: String, mode_type: String):
 	selected_game_mode = mode_name
 	game_mode_type = mode_type
@@ -290,6 +313,7 @@ func _hide_all_descriptions():
 	last_plane_standing_desc.visible = false
 	quick_match_desc.visible = false
 	oddball_desc.visible = false
+	koth_desc.visible = false
 	
 	# Hide Team descriptions
 	team_deathmatch_desc.visible = false
@@ -315,6 +339,8 @@ func _show_description(mode_name: String, mode_type: String):
 				description_container = quick_match_desc
 			"Oddball":
 				description_container = oddball_desc
+			"King of the Hill":
+				description_container = koth_desc
 	else:  # team mode
 		description_text = team_descriptions[mode_name]
 		match mode_name:
@@ -360,6 +386,7 @@ func _apply_preset_config(config: Dictionary):
 	hearts_enabled = config.hearts_enabled
 	clouds_enabled = config.clouds_enabled
 	oddball_mode = config.get("oddball_mode", false)
+	koth_mode = config.get("koth_mode", false)
 	
 	# Update UI elements
 	lives_spinbox.value = player_lives
@@ -371,6 +398,7 @@ func _apply_preset_config(config: Dictionary):
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
 	oddball_checkbox.button_pressed = oddball_mode
+	koth_checkbox.button_pressed = koth_mode
 	
 	_update_labels()
 	_update_time_limit_visibility()
@@ -419,6 +447,7 @@ func _on_start_server_pressed():
 		"hearts_enabled": hearts_enabled,
 		"clouds_enabled": clouds_enabled,
 		"oddball_mode": oddball_mode,
+		"koth_mode": koth_mode,
 		"game_mode": selected_game_mode,
 		"game_mode_type": game_mode_type
 	}

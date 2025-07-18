@@ -145,6 +145,10 @@ func _on_player_connected (id : int):
 		if game_manager:
 			game_manager._sync_skull_to_peer(id)
 		
+		# If a hill currently exists, instruct server to send it to the new peer so they can see it
+		if game_manager:
+			game_manager._sync_hill_to_peer(id)
+		
 		# Sync server configuration, cloud visibility and timer state to the new player
 		if game_manager:
 			game_manager._sync_config_to_peer(id)

@@ -264,6 +264,36 @@ text = "Hold the skull to score points"
 autowrap_mode = 3
 vertical_alignment = 1
 
+[node name="KingOfTheHill" type="Button" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
+layout_mode = 2
+text = "King of the Hill"
+
+[node name="KingOfTheHillDesc" type="VBoxContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox"]
+visible = false
+layout_mode = 2
+
+[node name="DescPanel" type="Panel" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 120)
+theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
+
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc/DescPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc/DescPanel/DescMargin"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Control the hill to score points"
+autowrap_mode = 3
+vertical_alignment = 1
+
 [node name="Team Modes" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
 layout_mode = 2
 
@@ -547,6 +577,14 @@ theme_override_constants/separation = 10
 [node name="OddballCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer"]
 layout_mode = 2
 text = "Oddball Mode"
+
+[node name="KOTHContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="KOTHCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/KOTHContainer"]
+layout_mode = 2
+text = "King of the Hill Mode"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2

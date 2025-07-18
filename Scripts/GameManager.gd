@@ -13,6 +13,7 @@ var time_limit_minutes : int = 10
 var hearts_enabled : bool = false
 var clouds_enabled : bool = true
 var oddball_mode : bool = false
+var koth_mode : bool = false
 
 # Heart powerup management
 var heart_scene = preload("res://Scenes/Heart.tscn")
@@ -25,6 +26,13 @@ var current_skull : Skull = null
 var skull_holder : Player = null
 var oddball_score_timer : Timer
 var oddball_win_score : int = 60
+
+# KOTH mode management
+var hill_scene = preload("res://Scenes/Hill.tscn")
+var current_hill : Hill = null
+var hill_movement_timer : Timer
+var koth_score_timer : Timer
+var koth_win_score : int = 60
 
 # Time limit tracking
 var time_limit_seconds : float = 0.0
@@ -84,6 +92,17 @@ func _ready():
 	oddball_score_timer.wait_time = 1.0  # 1 second
 	oddball_score_timer.timeout.connect(_on_oddball_score_timer)
 	add_child(oddball_score_timer)
+	
+	# Create KOTH timers
+	hill_movement_timer = Timer.new()
+	hill_movement_timer.wait_time = 30.0  # 30 seconds
+	hill_movement_timer.timeout.connect(_on_hill_movement_timer)
+	add_child(hill_movement_timer)
+	
+	koth_score_timer = Timer.new()
+	koth_score_timer.wait_time = 1.0  # 1 second
+	koth_score_timer.timeout.connect(_on_koth_score_timer)
+	add_child(koth_score_timer)
 
 func apply_server_config(config: Dictionary):
 	"""Apply server configuration settings to the game"""
@@ -96,6 +115,7 @@ func apply_server_config(config: Dictionary):
 	hearts_enabled = config.get("hearts_enabled", false)
 	clouds_enabled = config.get("clouds_enabled", true)
 	oddball_mode = config.get("oddball_mode", false)
+	koth_mode = config.get("koth_mode", false)
 	
 	# Send configuration to all clients
 	if multiplayer.is_server():
@@ -118,13 +138,17 @@ func apply_server_config(config: Dictionary):
 	if oddball_mode and multiplayer.is_server():
 		_spawn_skull()
 	
+	# Spawn hill if KOTH mode is enabled
+	if koth_mode and multiplayer.is_server():
+		_spawn_hill()
+	
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
 	# Show game UI elements now that the game has started
 	_show_game_ui()
 	
-	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s, Oddball=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled, oddball_mode])
+	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s, Oddball=%s, KOTH=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled, oddball_mode, koth_mode])
 
 @rpc("authority", "call_local", "reliable")
 func _apply_server_config_clients(config: Dictionary):
@@ -138,6 +162,7 @@ func _apply_server_config_clients(config: Dictionary):
 	hearts_enabled = config.get("hearts_enabled", false)
 	clouds_enabled = config.get("clouds_enabled", true)
 	oddball_mode = config.get("oddball_mode", false)
+	koth_mode = config.get("koth_mode", false)
 	
 	# Set initial timer value for clients
 	if has_time_limit:
@@ -215,7 +240,8 @@ func _sync_config_to_peer(peer_id: int):
 			"time_limit_minutes": time_limit_minutes,
 			"hearts_enabled": hearts_enabled,
 			"clouds_enabled": clouds_enabled,
-			"oddball_mode": oddball_mode
+			"oddball_mode": oddball_mode,
+			"koth_mode": koth_mode
 		}
 		rpc_id(peer_id, "_apply_server_config_clients", config)
 
@@ -279,7 +305,36 @@ func _time_limit_reached():
 	if oddball_mode:
 		oddball_score_timer.stop()
 	
-	if oddball_mode:
+	# Stop KOTH scoring if active
+	if koth_mode:
+		koth_score_timer.stop()
+		hill_movement_timer.stop()
+	
+	if koth_mode:
+		# KOTH mode: winner is player with highest hill control score
+		var highest_score = -1
+		var winners: Array[Player] = []
+		
+		for player in players:
+			if player.koth_score > highest_score:
+				highest_score = player.koth_score
+				winners = [player]
+			elif player.koth_score == highest_score:
+				winners.append(player)
+		
+		# Handle KOTH results
+		if winners.size() == 0 or highest_score == 0:
+			end_game_clients.rpc("Time Limit Reached - No Winner")
+		elif winners.size() == 1:
+			end_game_clients.rpc(winners[0].player_name + " (King of the Hill Winner - " + str(highest_score) + " seconds)")
+		else:
+			# Multiple winners - tie
+			var winner_names = []
+			for winner in winners:
+				winner_names.append(winner.player_name)
+			var tie_text = "Tie Game!\n" + " & ".join(winner_names) + " tied with " + str(highest_score) + " seconds"
+			end_game_clients.rpc(tie_text)
+	elif oddball_mode:
 		# Oddball mode: winner is player with highest oddball score
 		var highest_score = -1
 		var winners: Array[Player] = []
@@ -419,6 +474,7 @@ func reset_game():
 		player.respawn()
 		player.score = 0
 		player.oddball_score = 0
+		player.koth_score = 0
 		# Reset lives to configured amount
 		player.lives_remaining = player_lives
 	
@@ -451,6 +507,18 @@ func reset_game():
 		current_skull = null
 		# Spawn a new skull immediately
 		_spawn_skull()
+	
+	# Reset KOTH mode
+	if koth_mode and multiplayer.is_server():
+		# Stop timers
+		koth_score_timer.stop()
+		hill_movement_timer.stop()
+		# Remove any existing hill
+		if current_hill != null and is_instance_valid(current_hill):
+			current_hill.queue_free()
+		current_hill = null
+		# Spawn a new hill immediately
+		_spawn_hill()
 	
 	reset_game_clients.rpc()
 
@@ -677,3 +745,139 @@ func _sync_skull_to_peer(peer_id: int):
 		for player in players:
 			if player.oddball_score > 0:
 				rpc_id(peer_id, "_sync_oddball_score", player.player_id, player.oddball_score)
+
+# ============================================================
+# KING OF THE HILL MODE FUNCTIONS
+# ============================================================
+
+func _spawn_hill():
+	"""Spawn the hill for KOTH mode"""
+	if not multiplayer.is_server() or not koth_mode:
+		return
+	
+	if current_hill != null and is_instance_valid(current_hill):
+		return
+	
+	print("[Hill] Server spawning hill...")
+	
+	current_hill = hill_scene.instantiate()
+	current_hill.position = Vector2(0, 0)  # Spawn at center of map
+	current_hill.player_entered_hill.connect(_on_player_entered_hill)
+	current_hill.player_exited_hill.connect(_on_player_exited_hill)
+	
+	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(current_hill, true)
+	
+	# Start hill movement timer
+	hill_movement_timer.start()
+	
+	# Inform all clients to spawn a matching hill locally
+	print("[Hill] Calling RPC to spawn hill on clients at position: " + str(current_hill.position))
+	rpc("_spawn_hill_clients", current_hill.position)
+	
+	print("Hill spawned at position: " + str(current_hill.position))
+
+func _on_player_entered_hill(player: Player):
+	"""Called when a player enters the hill"""
+	print("Player " + player.player_name + " entered the hill")
+	
+	# Start KOTH scoring timer if this is the first player in the hill
+	if current_hill.get_players_in_hill().size() == 1:
+		koth_score_timer.start()
+
+func _on_player_exited_hill(player: Player):
+	"""Called when a player exits the hill"""
+	print("Player " + player.player_name + " exited the hill")
+	
+	# Stop KOTH scoring timer if no players are in the hill
+	if current_hill.get_players_in_hill().size() == 0:
+		koth_score_timer.stop()
+
+func _on_hill_movement_timer():
+	"""Move hill to a random location every 30 seconds"""
+	if current_hill and is_instance_valid(current_hill):
+		var new_position = _get_random_hill_position()
+		current_hill.move_to_position(new_position)
+		
+		# Sync hill position to all clients
+		_move_hill_clients.rpc(new_position)
+		
+		print("Hill moved to position: " + str(new_position))
+
+func _get_random_hill_position() -> Vector2:
+	"""Get a random position for the hill that keeps it fully visible"""
+	var padding = 100.0  # Extra padding to ensure full circle is visible
+	var x = randf_range(min_x + padding, max_x - padding)
+	var y = randf_range(min_y + padding, max_y - padding)
+	return Vector2(x, y)
+
+func _on_koth_score_timer():
+	"""Give 1 point every second to all players in the hill"""
+	if current_hill and is_instance_valid(current_hill):
+		var players_in_hill = current_hill.get_players_in_hill()
+		for player in players_in_hill:
+			if is_instance_valid(player):
+				player.koth_score += 1
+				
+				# Sync score to all clients
+				_sync_koth_score.rpc(player.player_id, player.koth_score)
+				
+				# Check for win condition
+				if player.koth_score >= koth_win_score:
+					_koth_win(player)
+					return
+
+func _koth_win(winner: Player):
+	"""Handle KOTH mode win"""
+	koth_score_timer.stop()
+	hill_movement_timer.stop()
+	end_game_clients.rpc(winner.player_name + " (King of the Hill Winner)")
+
+@rpc("authority", "call_local", "reliable")
+func _spawn_hill_clients(position: Vector2):
+	"""Create a hill on non-server peers so everyone can see it"""
+	print("[Hill] _spawn_hill_clients called with position: " + str(position))
+	
+	# Avoid duplicating the hill on the server
+	if multiplayer.is_server():
+		print("[Hill] Client spawn ignored on server")
+		return
+
+	# Safety: ensure we don't already have a hill
+	for child in get_tree().get_current_scene().get_node("Network/SpawnedNodes").get_children():
+		if child is Hill:
+			print("[Hill] Client already has a hill, skipping spawn")
+			return
+
+	print("[Hill] Client spawning hill at position: " + str(position))
+	var hill = hill_scene.instantiate()
+	hill.position = position
+	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(hill)
+	print("[Hill] Client hill spawned successfully")
+
+@rpc("authority", "call_local", "reliable")
+func _move_hill_clients(position: Vector2):
+	"""Move hill to new position on all clients"""
+	for child in get_tree().get_current_scene().get_node("Network/SpawnedNodes").get_children():
+		if child is Hill:
+			child.move_to_position(position)
+			print("[Hill] Client hill moved to position: " + str(position))
+			break
+
+@rpc("authority", "call_local", "reliable")
+func _sync_koth_score(player_id: int, score: int):
+	"""Sync KOTH score to all clients"""
+	var player = get_player(player_id)
+	if player:
+		player.koth_score = score
+
+# Send hill to a single newly-connected peer (called by NetworkManager)
+func _sync_hill_to_peer(peer_id: int):
+	"""Send current hill state to a specific peer"""
+	if multiplayer.is_server() and koth_mode and current_hill and is_instance_valid(current_hill):
+		rpc_id(peer_id, "_spawn_hill_clients", current_hill.position)
+	
+	# Also sync all players' KOTH scores to the new peer
+	if multiplayer.is_server() and koth_mode:
+		for player in players:
+			if player.koth_score > 0:
+				rpc_id(peer_id, "_sync_koth_score", player.player_id, player.koth_score)
