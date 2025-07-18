@@ -17,31 +17,21 @@ class_name ServerConfig
 
 # UI References - Free-for-all Tab
 @onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatch"
-@onready var timed_combat_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombat"
-@onready var last_plane_standing_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStanding"
-@onready var quick_match_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatch"
 @onready var oddball_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/Oddball"
 @onready var koth_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHill"
 
 # UI References - Free-for-all Descriptions
 @onready var classic_deathmatch_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatchDesc"
-@onready var timed_combat_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/TimedCombatDesc"
-@onready var last_plane_standing_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/LastPlaneStandingDesc"
-@onready var quick_match_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/QuickMatchDesc"
 @onready var oddball_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/OddballDesc"
 @onready var koth_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc"
 
 # UI References - Team Modes Tab
 @onready var team_deathmatch_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch"
 @onready var capture_flag_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlag"
-@onready var domination_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/Domination"
-@onready var squadron_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/Squadron"
 
 # UI References - Team Modes Descriptions
 @onready var team_deathmatch_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc"
 @onready var capture_flag_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc"
-@onready var domination_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/DominationDesc"
-@onready var squadron_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/SquadronDesc"
 
 # UI References - Common
 @onready var tab_container = $VBoxContainer/TabContainer
@@ -77,35 +67,7 @@ var ffa_presets = {
 		"hearts_enabled": false,
 		"clouds_enabled": true
 	},
-	"Timed Combat": {
-		"player_lives": 5,
-		"max_players": 4,
-		"speed_multiplier": 1.2,
-		"damage_multiplier": 1.0,
-		"has_time_limit": true,
-		"time_limit_minutes": 10,
-		"hearts_enabled": true,
-		"clouds_enabled": true
-	},
-	"Last Plane Standing": {
-		"player_lives": 1,
-		"max_players": 8,
-		"speed_multiplier": 0.8,
-		"damage_multiplier": 1.5,
-		"has_time_limit": false,
-		"hearts_enabled": false,
-		"clouds_enabled": false
-	},
-	"Quick Match": {
-		"player_lives": 2,
-		"max_players": 4,
-		"speed_multiplier": 1.5,
-		"damage_multiplier": 1.2,
-		"has_time_limit": true,
-		"time_limit_minutes": 5,
-		"hearts_enabled": true,
-		"clouds_enabled": true
-	},
+
 	"Oddball": {
 		"player_lives": 3,
 		"max_players": 6,
@@ -151,43 +113,19 @@ var team_presets = {
 		"hearts_enabled": true,
 		"clouds_enabled": true
 	},
-	"Domination": {
-		"player_lives": 4,
-		"max_players": 6,
-		"speed_multiplier": 1.0,
-		"damage_multiplier": 1.0,
-		"has_time_limit": true,
-		"time_limit_minutes": 12,
-		"hearts_enabled": true,
-		"clouds_enabled": true
-	},
-	"Squadron vs Squadron": {
-		"player_lives": 2,
-		"max_players": 8,
-		"speed_multiplier": 0.9,
-		"damage_multiplier": 1.3,
-		"has_time_limit": true,
-		"time_limit_minutes": 18,
-		"hearts_enabled": false,
-		"clouds_enabled": false
-	}
+
 }
 
 # Game mode descriptions
 var ffa_descriptions = {
 	"Classic Deathmatch": "Standard dogfight action\n• 3 Lives per player\n• Up to 6 players\n• No time limit\n• Classic combat experience",
-	"Timed Combat": "Fast-paced combat with time limit\n• 5 Lives per player\n• Up to 4 players\n• 10 minute time limit\n• 1.2x speed boost\n• Heart powerups enabled",
-	"Last Plane Standing": "Elimination mode - one life only\n• 1 Life per player\n• Up to 8 players\n• No time limit\n• 0.8x speed, 1.5x damage\n• No clouds for better visibility",
-	"Quick Match": "Quick action for casual play\n• 2 Lives per player\n• Up to 4 players\n• 5 minute time limit\n• 1.5x speed, 1.2x damage\n• Heart powerups enabled",
 	"Oddball": "Hold the skull to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Drop skull when killed",
 	"King of the Hill": "Control the hill to score points\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First to 60 seconds wins\n• Hill moves every 30 seconds"
 }
 
 var team_descriptions = {
 	"Team Deathmatch": "Team vs team combat\n• 3 Lives per player\n• Up to 6 players\n• 15 minute time limit\n• Heart powerups enabled\n• Balanced team warfare",
-	"Capture The Flag": "Capture and defend objectives\n• 5 Lives per player\n• Up to 8 players\n• 20 minute time limit\n• 1.2x speed, 0.8x damage\n• Extended tactical gameplay",
-	"Domination": "Control zones for victory\n• 4 Lives per player\n• Up to 6 players\n• 12 minute time limit\n• Heart powerups enabled\n• Strategic zone control",
-	"Squadron vs Squadron": "Elite squadron battles\n• 2 Lives per player\n• Up to 8 players\n• 18 minute time limit\n• 0.9x speed, 1.3x damage\n• No clouds, intense combat"
+	"Capture The Flag": "Capture and defend objectives\n• 5 Lives per player\n• Up to 8 players\n• 20 minute time limit\n• 1.2x speed, 0.8x damage\n• Extended tactical gameplay"
 }
 
 func _ready():
@@ -220,17 +158,12 @@ func _ready():
 	
 	# Connect signals - FFA tab
 	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Classic Deathmatch", "ffa"))
-	timed_combat_btn.pressed.connect(_on_game_mode_selected.bind("Timed Combat", "ffa"))
-	last_plane_standing_btn.pressed.connect(_on_game_mode_selected.bind("Last Plane Standing", "ffa"))
-	quick_match_btn.pressed.connect(_on_game_mode_selected.bind("Quick Match", "ffa"))
 	oddball_btn.pressed.connect(_on_game_mode_selected.bind("Oddball", "ffa"))
 	koth_btn.pressed.connect(_on_game_mode_selected.bind("King of the Hill", "ffa"))
 	
 	# Connect signals - Team tab
 	team_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Team Deathmatch", "team"))
 	capture_flag_btn.pressed.connect(_on_game_mode_selected.bind("Capture The Flag", "team"))
-	domination_btn.pressed.connect(_on_game_mode_selected.bind("Domination", "team"))
-	squadron_btn.pressed.connect(_on_game_mode_selected.bind("Squadron vs Squadron", "team"))
 	
 	# Connect signals - Common
 	start_server_button.pressed.connect(_on_start_server_pressed)
@@ -309,17 +242,12 @@ func _on_game_mode_selected(mode_name: String, mode_type: String):
 func _hide_all_descriptions():
 	# Hide FFA descriptions
 	classic_deathmatch_desc.visible = false
-	timed_combat_desc.visible = false
-	last_plane_standing_desc.visible = false
-	quick_match_desc.visible = false
 	oddball_desc.visible = false
 	koth_desc.visible = false
 	
 	# Hide Team descriptions
 	team_deathmatch_desc.visible = false
 	capture_flag_desc.visible = false
-	domination_desc.visible = false
-	squadron_desc.visible = false
 
 func _show_description(mode_name: String, mode_type: String):
 	var description_text = ""
@@ -331,12 +259,6 @@ func _show_description(mode_name: String, mode_type: String):
 		match mode_name:
 			"Classic Deathmatch":
 				description_container = classic_deathmatch_desc
-			"Timed Combat":
-				description_container = timed_combat_desc
-			"Last Plane Standing":
-				description_container = last_plane_standing_desc
-			"Quick Match":
-				description_container = quick_match_desc
 			"Oddball":
 				description_container = oddball_desc
 			"King of the Hill":
@@ -348,10 +270,6 @@ func _show_description(mode_name: String, mode_type: String):
 				description_container = team_deathmatch_desc
 			"Capture The Flag":
 				description_container = capture_flag_desc
-			"Domination":
-				description_container = domination_desc
-			"Squadron vs Squadron":
-				description_container = squadron_desc
 	
 	# Show description
 	if description_container:
@@ -460,19 +378,9 @@ func _configure_game_mode_buttons():
 	# Configure FFA buttons
 	classic_deathmatch_btn.focus_mode = Control.FOCUS_ALL
 	classic_deathmatch_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	timed_combat_btn.focus_mode = Control.FOCUS_ALL
-	timed_combat_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	last_plane_standing_btn.focus_mode = Control.FOCUS_ALL
-	last_plane_standing_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	quick_match_btn.focus_mode = Control.FOCUS_ALL
-	quick_match_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	# Configure Team buttons
 	team_deathmatch_btn.focus_mode = Control.FOCUS_ALL
 	team_deathmatch_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	capture_flag_btn.focus_mode = Control.FOCUS_ALL
-	capture_flag_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	domination_btn.focus_mode = Control.FOCUS_ALL
-	domination_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	squadron_btn.focus_mode = Control.FOCUS_ALL
-	squadron_btn.mouse_filter = Control.MOUSE_FILTER_STOP 
+	capture_flag_btn.mouse_filter = Control.MOUSE_FILTER_STOP 
