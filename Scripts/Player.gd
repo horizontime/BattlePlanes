@@ -71,6 +71,12 @@ var weapon_heat_cool_rate : float = 25.0
 var weapon_heat_cap_wait_time : float = 1.5
 var weapon_heat_waiting : bool = false
 
+# Prevent immediate pickups (e.g., Oddball skull) right after spawn
+var _pickup_immunity_until_ms : int = 0  # game ticks in milliseconds until which pickup is disallowed
+
+func can_pickup_items() -> bool:
+	return Time.get_ticks_msec() >= _pickup_immunity_until_ms
+
 # NEW: sync weapon heat to clients
 @rpc("reliable")
 func _sync_weapon_heat(new_heat: float):
@@ -110,15 +116,21 @@ func _ready():
 		set_player_name.rpc(network_manager.local_username)
 	
 	if multiplayer.is_server():
-		# Small delay to ensure multiplayer authority is set
-		await get_tree().process_frame
+		# Assign a random spawn position immediately to avoid starting at (0,0)
 		position = game_manager.get_random_position()
 		rotation = randf() * 2 * PI  # Random initial rotation
+
+		# Set a short immunity period where pickups are disabled
+		_pickup_immunity_until_ms = Time.get_ticks_msec() + 500  # 0.5 seconds
+
+		# Small delay to ensure multiplayer authority is fully set before syncing state
+		await get_tree().process_frame
+		# Re-sync position in case any network interpolation occurred during the first frame
+		_sync_respawn_state.rpc(position, rotation)
 		sprite.visible = true  # Ensure sprite is visible on spawn
 		print("Player %d spawned at position: %s, rotation: %s" % [player_id, position, rotation])
 		
-		# Sync initial spawn state to all clients
-		_sync_respawn_state.rpc(position, rotation)
+		# Initial spawn state already synced above after authority confirmation
 
 func _apply_speed_multiplier():
 	"""Apply the speed multiplier from game configuration"""
@@ -269,6 +281,9 @@ func respawn ():
 		rotation = randf() * 2 * PI  # Random respawn rotation
 		sprite.visible = true  # Show sprite on server
 		
+		# Disallow pickups briefly after respawn
+		_pickup_immunity_until_ms = Time.get_ticks_msec() + 500  # 0.5 seconds
+
 		# Sync respawn state and health to all clients
 		_sync_respawn_state.rpc(position, rotation)
 		_sync_health.rpc(cur_hp)
