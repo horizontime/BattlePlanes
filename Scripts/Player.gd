@@ -71,6 +71,13 @@ var weapon_heat_cool_rate : float = 25.0
 var weapon_heat_cap_wait_time : float = 1.5
 var weapon_heat_waiting : bool = false
 
+# NEW: sync weapon heat to clients
+@rpc("reliable")
+func _sync_weapon_heat(new_heat: float):
+	# Server sends weapon heat updates; clients receive
+	if not multiplayer.is_server():
+		cur_weapon_heat = new_heat
+
 # border locations for wrapping around
 var border_min_x : float = -400
 var border_max_x : float = 400
@@ -180,6 +187,8 @@ func _try_shoot ():
 	
 	cur_weapon_heat += weapon_heat_increase_rate
 	cur_weapon_heat = clamp(cur_weapon_heat, 0, max_weapon_heat)
+	# NEW: send updated heat to all clients
+	_sync_weapon_heat.rpc(cur_weapon_heat)
 
 # called on all CLIENTS when player shoots
 @rpc("authority", "call_local", "reliable")
@@ -270,7 +279,9 @@ func _manage_weapon_heat (delta):
 		
 		if cur_weapon_heat < 0:
 			cur_weapon_heat = 0
-		
+
+		# NEW: update clients with cooled heat value
+		_sync_weapon_heat.rpc(cur_weapon_heat)
 		return
 	
 	if weapon_heat_waiting:
@@ -280,6 +291,8 @@ func _manage_weapon_heat (delta):
 	await get_tree().create_timer(weapon_heat_cap_wait_time).timeout
 	weapon_heat_waiting = false
 	cur_weapon_heat -= weapon_heat_cool_rate * delta
+	# NEW: send heat update after waiting period as well
+	_sync_weapon_heat.rpc(cur_weapon_heat)
 
 # loop around when we leave the screen
 func _check_border ():
