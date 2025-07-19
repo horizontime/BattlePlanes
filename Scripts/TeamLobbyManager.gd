@@ -100,11 +100,20 @@ func _on_team_switch_pressed():
 	
 	_update_player_list()
 
-@rpc("any_peer", "call_local", "reliable")
+@rpc("any_peer", "reliable")
 func _sync_team_assignment(player_id: int, team: int):
 	"""Sync team assignment across all clients"""
 	team_assignments[player_id] = team
 	_update_player_list()
+
+	# If we are the server and this change originated from a client (sender != 0),
+	# relay the update to every peer so all lobbies stay consistent.
+	if multiplayer.is_server():
+		var sender_id := multiplayer.get_remote_sender_id()
+		# Relay the update to every peer **except** the one who sent it (they already updated)
+		for peer_id in multiplayer.get_peers():
+			if peer_id != sender_id:
+				_sync_team_assignment.rpc_id(peer_id, player_id, team)
 
 func get_team_assignments() -> Dictionary:
 	"""Get current team assignments for use by GameManager"""
