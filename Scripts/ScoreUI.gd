@@ -9,6 +9,8 @@ var game_manager
 
 # Team score display elements (will be created dynamically)
 var team_score_container = null
+# Team Oddball skull status display
+var skull_status_container = null
 
 var last_oddball_mode = false  # Track mode changes
 var last_koth_mode = false  # Track KOTH mode changes
@@ -19,6 +21,10 @@ func _ready():
 	
 	# Set up table headers (will be updated dynamically in _process)
 	header_name.text = "Name"
+	
+	# Note: ScoreUI automatically listens to Team Oddball time updates via GameManager.team_skull_time
+	# The GameManager receives update_team_oddball_time RPC calls and updates team_skull_time dictionary
+	# which ScoreUI reads in _process() and _update_skull_status() for real-time UI refresh
 
 func _process(delta):
 	# Update headers only when game mode changes
@@ -29,6 +35,10 @@ func _process(delta):
 		
 		if game_manager.koth_mode:
 			header_lives.text = "Score"  # Reuse lives header for KOTH score
+			header_kills.text = "Kills"
+			header_score.visible = false  # Don't need separate score column
+		elif game_manager.game_mode == "Team Oddball":
+			header_lives.text = "Skull Time"  # Replace "Score" with "Skull Time"
 			header_kills.text = "Kills"
 			header_score.visible = false  # Don't need separate score column
 		elif game_manager.oddball_mode:
@@ -54,6 +64,10 @@ func _process(delta):
 	# Update team scores in real-time if in Team Slayer mode
 	if game_manager.game_mode == "Team Slayer" and team_score_container:
 		_update_team_scores()
+	 
+	# Update Team Oddball skull status in real-time
+	if game_manager.game_mode == "Team Oddball" and skull_status_container:
+		_update_skull_status()
 	
 	# Clear existing player entries
 	for child in player_list.get_children():
@@ -80,6 +94,12 @@ func _process(delta):
 		var lives_label = Label.new()
 		if game_manager.koth_mode:
 			lives_label.text = str(player.koth_score)  # Show KOTH score
+		elif game_manager.game_mode == "Team Oddball":
+			# Show team skull time for this player's team
+			if player.team == 0:
+				lives_label.text = str(int(game_manager.team_skull_time[0])) + "s"
+			else:
+				lives_label.text = str(int(game_manager.team_skull_time[1])) + "s"
 		elif game_manager.oddball_mode:
 			lives_label.text = str(player.oddball_score)  # Show oddball score
 		elif game_manager.game_mode == "FFA Slayer":
@@ -104,6 +124,17 @@ func _process(delta):
 		kills_label.custom_minimum_size.x = 40
 		kills_label.add_theme_font_size_override("font_size", 11)
 		kills_label.add_theme_color_override("font_color", Color.WHITE)
+		
+		# Color-code rows by team for clarity in Team Oddball mode
+		if game_manager.game_mode == "Team Oddball":
+			if player.team == 0:  # Team A
+				name_label.add_theme_color_override("font_color", Color.CYAN)
+				lives_label.add_theme_color_override("font_color", Color.CYAN)
+				kills_label.add_theme_color_override("font_color", Color.CYAN)
+			else:  # Team B
+				name_label.add_theme_color_override("font_color", Color.YELLOW)
+				lives_label.add_theme_color_override("font_color", Color.YELLOW)
+				kills_label.add_theme_color_override("font_color", Color.YELLOW)
 		
 		# Right spacer
 		var right_spacer = Control.new()
@@ -153,11 +184,46 @@ func _update_team_score_display():
 			team_score_container.add_child(team_a_label)
 			team_score_container.add_child(team_b_label)
 			team_score_container.add_child(separator)
-		else:
-			# Hide or remove team score container for other modes
+	elif game_manager.game_mode == "Team Oddball":
+		# Create Team Oddball skull time display if it doesn't exist
+		if skull_status_container == null:
+			skull_status_container = VBoxContainer.new()
+			skull_status_container.name = "SkullStatusContainer"
+			
+			# Add skull status container at the top
+			$VBoxContainer.add_child(skull_status_container)
+			$VBoxContainer.move_child(skull_status_container, 0)  # Move to top
+			
+			# Create team skull time labels
+			var team_a_time_label = Label.new()
+			team_a_time_label.name = "TeamATimeLabel"
+			team_a_time_label.text = "Team A: 0s"
+			team_a_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			team_a_time_label.add_theme_font_size_override("font_size", 12)
+			team_a_time_label.add_theme_color_override("font_color", Color.CYAN)
+			
+			var team_b_time_label = Label.new()
+			team_b_time_label.name = "TeamBTimeLabel"
+			team_b_time_label.text = "Team B: 0s"
+			team_b_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			team_b_time_label.add_theme_font_size_override("font_size", 12)
+			team_b_time_label.add_theme_color_override("font_color", Color.YELLOW)
+			
+			# Add separator
+			var separator = HSeparator.new()
+			separator.add_theme_constant_override("separation", 5)
+			
+			skull_status_container.add_child(team_a_time_label)
+			skull_status_container.add_child(team_b_time_label)
+			skull_status_container.add_child(separator)
+	else:
+			# Hide or remove containers for other modes
 			if team_score_container:
 				team_score_container.queue_free()
 				team_score_container = null
+			if skull_status_container:
+				skull_status_container.queue_free()
+				skull_status_container = null
 
 func _update_team_scores():
 	"""Update team score labels with current scores"""
@@ -168,3 +234,13 @@ func _update_team_scores():
 		if team_a_label and team_b_label:
 			team_a_label.text = "Team A: %d" % game_manager.team_kill_scores[0]
 			team_b_label.text = "Team B: %d" % game_manager.team_kill_scores[1]
+
+func _update_skull_status():
+	"""Update team skull time labels with current times"""
+	if skull_status_container:
+		var team_a_time_label = skull_status_container.get_node("TeamATimeLabel")
+		var team_b_time_label = skull_status_container.get_node("TeamBTimeLabel")
+		
+		if team_a_time_label and team_b_time_label:
+			team_a_time_label.text = "Team A: %ds" % int(game_manager.team_skull_time[0])
+			team_b_time_label.text = "Team B: %ds" % int(game_manager.team_skull_time[1])

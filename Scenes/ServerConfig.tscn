@@ -323,6 +323,36 @@ text = "Capture and defend objectives"
 autowrap_mode = 3
 vertical_alignment = 1
 
+[node name="TeamOddball" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
+layout_mode = 2
+text = "Team Oddball"
+
+[node name="TeamOddballDesc" type="VBoxContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
+visible = false
+layout_mode = 2
+
+[node name="DescPanel" type="Panel" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamOddballDesc"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 120)
+theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
+
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamOddballDesc/DescPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamOddballDesc/DescPanel/DescMargin"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Hold the skull as a team for 100 s to win."
+autowrap_mode = 3
+vertical_alignment = 1
+
 
 
 [node name="Custom" type="VBoxContainer" parent="VBoxContainer/TabContainer"]

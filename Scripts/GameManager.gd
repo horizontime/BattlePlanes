@@ -8,6 +8,9 @@ var team_assignments: Dictionary = {}  # player_id -> team (0 = Team A, 1 = Team
 var is_team_mode: bool = false
 var team_kill_scores: Dictionary = {0:0, 1:0}  # team kill scores for team-based modes
 
+# Game mode constants
+const MODE_TEAM_ODDBALL = "Team Oddball"
+
 # Game configuration settings
 var player_lives : int = 3
 var max_players : int = 4
@@ -34,6 +37,13 @@ var current_skull : Skull = null
 var skull_holder : Player = null
 var oddball_score_timer : Timer
 var oddball_win_score : int = 60
+
+# Team Oddball mode variables
+const TEAM_A = 0
+const TEAM_B = 1
+var team_skull_time: Dictionary = {TEAM_A: 0, TEAM_B: 0}
+var player_kills: Dictionary = {}  # player_id -> kill count
+var last_team_time_update: float = 0.0  # Track when we last sent RPC update
 
 # KOTH mode management
 var hill_scene = preload("res://Scenes/Hill.tscn")
@@ -128,6 +138,30 @@ func _ready():
 	# Initialize team kill scores
 	team_kill_scores = {0:0, 1:0}
 
+func _process(delta):
+	# Check if multiplayer instance is active
+	if not multiplayer.get_multiplayer_peer():
+		return
+		
+	# Team Oddball server-authoritative time tracking
+	if multiplayer.is_server() and game_mode == MODE_TEAM_ODDBALL and skull_holder and is_instance_valid(skull_holder):
+		var holder_team = skull_holder.team
+		team_skull_time[holder_team] += delta
+		
+		# Broadcast team time update every second
+		last_team_time_update += delta
+		if last_team_time_update >= 1.0:
+			last_team_time_update = 0.0
+			update_team_oddball_time.rpc(TEAM_A, team_skull_time[TEAM_A])
+			update_team_oddball_time.rpc(TEAM_B, team_skull_time[TEAM_B])
+		
+		# Check win condition on time gain
+		_check_team_oddball_win()
+	
+	# Also check elapsed time win conditions for Team Oddball
+	if multiplayer.is_server() and game_mode == MODE_TEAM_ODDBALL and has_time_limit:
+		_check_team_oddball_time_limit()
+
 func apply_server_config(config: Dictionary):
 	"""Apply server configuration settings to the game"""
 	player_lives = config.get("player_lives", 3)
@@ -161,8 +195,23 @@ func apply_server_config(config: Dictionary):
 	if hearts_enabled and multiplayer.is_server():
 		_spawn_heart()
 	
-	# Spawn skull if oddball mode is enabled
-	if oddball_mode and multiplayer.is_server():
+	# Team Oddball initialization
+	if game_mode == MODE_TEAM_ODDBALL and multiplayer.is_server():
+		# Initialize team skull time
+		team_skull_time = {TEAM_A: 0, TEAM_B: 0}
+		# Initialize player kills - ensure all current and future players are tracked
+		if not player_kills:
+			player_kills = {}
+		for player in players:
+			if not player_kills.has(player.player_id):
+				player_kills[player.player_id] = 0
+		# Set oddball_mode to true for skull spawning
+		oddball_mode = true
+		print("Team Oddball mode enabled, spawning skull...")
+		# Small delay to ensure all clients are ready
+		await get_tree().create_timer(0.5).timeout
+		_spawn_skull()
+	elif oddball_mode and multiplayer.is_server():
 		print("Oddball mode enabled, spawning skull...")
 		# Small delay to ensure all clients are ready
 		await get_tree().create_timer(0.5).timeout
@@ -576,8 +625,10 @@ func on_player_die (player_id : int, attacker_id : int):
 	var player : Player = get_player(player_id)
 	var attacker : Player = get_player(attacker_id)
 	
-	# Team Slayer logic
-	if game_mode == "Team Slayer":
+	# Team Oddball kill handling
+	if game_mode == MODE_TEAM_ODDBALL:
+		_handle_team_oddball_kill(player, attacker)
+	elif game_mode == "Team Slayer":
 		if attacker.team != player.team:
 			# Enemy kill: +1 to attacker score and team score
 			attacker.increase_score(1)
@@ -751,6 +802,10 @@ func reset_game():
 # called when the game resets on all CLIENTS
 @rpc("authority", "call_local", "reliable")
 func reset_game_clients ():
+	# Clean up any dynamically created buttons from results screen
+	if end_screen.has_node("ButtonContainer"):
+		end_screen.get_node("ButtonContainer").queue_free()
+	
 	end_screen.visible = false
 	_show_game_ui()  # Show UI again when game resets
 
@@ -997,10 +1052,23 @@ func _sync_oddball_score(player_id: int, score: int):
 	if player:
 		player.oddball_score = score
 
-func drop_skull_on_death(player: Player):
+func drop_skull_on_death(player: Player, death_position: Vector2 = Vector2.ZERO):
 	"""Drop skull when player dies if they're holding it"""
-	if oddball_mode and skull_holder == player and current_skull:
-		current_skull.drop_skull()
+	print("[Skull] drop_skull_on_death called for player: " + player.player_name)
+	print("[Skull] oddball_mode: " + str(oddball_mode) + ", game_mode: " + str(game_mode))
+	print("[Skull] skull_holder: " + (skull_holder.player_name if skull_holder else "null"))
+	print("[Skull] current_skull valid: " + str(current_skull != null and is_instance_valid(current_skull)))
+	
+	# Check for both regular Oddball and Team Oddball modes
+	if (oddball_mode or game_mode == MODE_TEAM_ODDBALL) and skull_holder == player and current_skull:
+		print("[Skull] Player " + player.player_name + " died while holding skull, dropping at death position")
+		# Use death position if provided, otherwise use current skull position
+		if death_position != Vector2.ZERO:
+			current_skull.drop_skull_at_position(death_position)
+		else:
+			current_skull.drop_skull()
+	else:
+		print("[Skull] Conditions not met for skull drop - not dropping skull")
 
 # Send skull to a single newly-connected peer (called by NetworkManager)
 func _sync_skull_to_peer(peer_id: int):
@@ -1213,6 +1281,191 @@ func _update_team_score(team: int, delta: int):
 	if team_kill_scores[team] >= 30:
 		var team_name = "Team A" if team == 0 else "Team B"
 		end_game_clients.rpc(team_name + " (Team Victory - " + str(team_kill_scores[team]) + " kills)")
+
+# ============================================================
+# TEAM ODDBALL MODE FUNCTIONS
+# ============================================================
+
+func _handle_team_oddball_kill(victim: Player, killer: Player):
+	"""Handle kill counting for Team Oddball mode"""
+	# Ensure both players are tracked in kill dictionary
+	if not player_kills.has(victim.player_id):
+		player_kills[victim.player_id] = 0
+	if killer and not player_kills.has(killer.player_id):
+		player_kills[killer.player_id] = 0
+	
+	if killer and killer.team != victim.team:
+		# Enemy kill: increment killer's kill count
+		player_kills[killer.player_id] += 1
+	elif killer:
+		# Friendly fire: decrement but don't go below 0
+		player_kills[killer.player_id] = max(0, player_kills[killer.player_id] - 1)
+
+func _check_team_oddball_win():
+	"""Check if any team has reached 100 seconds of skull time"""
+	for team in team_skull_time:
+		if team_skull_time[team] >= 100.0:
+			_end_team_oddball_match(team)
+
+func _check_team_oddball_time_limit():
+	"""Check Team Oddball time limit (300s) and determine winner"""
+	if time_limit_seconds <= 0.0:
+		# Determine winner based on skull time, tiebreaker by kills
+		if team_skull_time[TEAM_A] > team_skull_time[TEAM_B]:
+			_end_team_oddball_match(TEAM_A)
+		elif team_skull_time[TEAM_B] > team_skull_time[TEAM_A]:
+			_end_team_oddball_match(TEAM_B)
+		else:
+			# Tie on skull time, tiebreaker by team kills
+			var team_a_kills = 0
+			var team_b_kills = 0
+			
+			for player_id in player_kills:
+				if team_assignments.has(player_id):
+					if team_assignments[player_id] == TEAM_A:
+						team_a_kills += player_kills[player_id]
+					elif team_assignments[player_id] == TEAM_B:
+						team_b_kills += player_kills[player_id]
+			
+			if team_a_kills > team_b_kills:
+				_end_team_oddball_match(TEAM_A)
+			elif team_b_kills > team_a_kills:
+				_end_team_oddball_match(TEAM_B)
+			else:
+				# Complete tie, declare draw
+				end_game_clients.rpc("Draw! Both teams tied on skull time and kills.")
+
+func _end_team_oddball_match(winning_team: int):
+	"""End Team Oddball match with specified winning team"""
+	var team_name = "Team A" if winning_team == TEAM_A else "Team B"
+	var skull_time = int(team_skull_time[winning_team])
+	
+	# Create results data for Team Oddball
+	var results_data = {
+		"game_mode": "Team Oddball",
+		"winning_team": winning_team,
+		"team_name": team_name,
+		"team_a_skull_time": int(team_skull_time[TEAM_A]),
+		"team_b_skull_time": int(team_skull_time[TEAM_B]),
+		"individual_stats": []
+	}
+	
+	# Collect individual player statistics
+	for player in players:
+		var player_stats = {
+			"player_name": player.player_name,
+			"player_id": player.player_id,
+			"team": player.team,
+			"kills": player_kills.get(player.player_id, 0),
+			"deaths": player.deaths
+		}
+		results_data.individual_stats.append(player_stats)
+	
+	# Announce the team oddball winner via RPC
+	announce_team_oddball_winner.rpc(winning_team)
+	
+	# End the game with results data
+	end_game_with_results.rpc(results_data)
+
+@rpc("authority", "call_local", "reliable")
+func update_team_oddball_time(team: int, time: float):
+	"""Update team skull time on all clients"""
+	team_skull_time[team] = time
+
+@rpc("authority", "call_local", "reliable")
+func announce_team_oddball_winner(team_id: int):
+	"""Announce Team Oddball winner to all clients"""
+	var team_name = "Team A" if team_id == TEAM_A else "Team B"
+	var skull_time = int(team_skull_time[team_id])
+	print("[Team Oddball] " + team_name + " wins with " + str(skull_time) + " seconds of skull time!")
+
+# Enhanced results screen for Team Oddball and other modes
+@rpc("authority", "call_local", "reliable")
+func end_game_with_results(results_data: Dictionary):
+	"""End game and display detailed results screen"""
+	_hide_game_ui()  # Hide game UI
+	_display_results_screen(results_data)
+
+func _display_results_screen(results_data: Dictionary):
+	"""Display detailed results screen with team and individual statistics"""
+	end_screen.visible = true
+	
+	# Clear existing winner text and replace with detailed results
+	if results_data.game_mode == "Team Oddball":
+		# Create the winner text
+		var winner_text = "Team Oddball Winners: " + results_data.team_name + "\n"
+		winner_text += "Team A: " + str(results_data.team_a_skull_time) + "s | "
+		winner_text += "Team B: " + str(results_data.team_b_skull_time) + "s\n\n"
+		winner_text += "Individual Kill Stats:\n"
+		
+		# Sort players by team and then by kills
+		var team_a_players = []
+		var team_b_players = []
+		
+		for player_stat in results_data.individual_stats:
+			if player_stat.team == 0:
+				team_a_players.append(player_stat)
+			else:
+				team_b_players.append(player_stat)
+		
+		# Sort by kills (descending)
+		team_a_players.sort_custom(func(a, b): return a.kills > b.kills)
+		team_b_players.sort_custom(func(a, b): return a.kills > b.kills)
+		
+		# Add Team A stats
+		winner_text += "Team A:\n"
+		for player in team_a_players:
+			winner_text += "  " + player.player_name + ": " + str(player.kills) + " kills, " + str(player.deaths) + " deaths\n"
+		
+		# Add Team B stats
+		winner_text += "Team B:\n"
+		for player in team_b_players:
+			winner_text += "  " + player.player_name + ": " + str(player.kills) + " kills, " + str(player.deaths) + " deaths\n"
+		
+		end_screen_winner_text.text = winner_text
+	
+	# Hide the play again button and show countdown
+	end_screen_button.visible = false
+	
+	# Add "Play again" and "Back to lobby" functionality
+	if not end_screen.has_node("ButtonContainer"):
+		var button_container = HBoxContainer.new()
+		button_container.name = "ButtonContainer"
+		button_container.position = Vector2(250, 350)
+		button_container.add_theme_constant_override("separation", 20)
+		
+		var play_again_btn = Button.new()
+		play_again_btn.text = "Play Again"
+		play_again_btn.custom_minimum_size = Vector2(120, 40)
+		play_again_btn.pressed.connect(_on_play_again_pressed)
+		
+		var back_to_lobby_btn = Button.new()
+		back_to_lobby_btn.text = "Back to Lobby"
+		back_to_lobby_btn.custom_minimum_size = Vector2(120, 40)
+		back_to_lobby_btn.pressed.connect(_on_back_to_lobby_pressed)
+		
+		button_container.add_child(play_again_btn)
+		button_container.add_child(back_to_lobby_btn)
+		end_screen.add_child(button_container)
+	
+	# Initialize countdown
+	lobby_countdown_seconds = 4
+	if lobby_countdown_label:
+		lobby_countdown_label.visible = true
+		lobby_countdown_label.text = "Returning to lobby in %d..." % lobby_countdown_seconds
+	
+	# Start countdown timer
+	lobby_countdown_timer.start()
+
+func _on_play_again_pressed():
+	"""Handle Play Again button press"""
+	if multiplayer.is_server():
+		reset_game()
+
+func _on_back_to_lobby_pressed():
+	"""Handle Back to Lobby button press"""
+	if multiplayer.is_server():
+		_return_to_lobby()
 
 func _on_lobby_countdown_tick():
 	lobby_countdown_seconds -= 1

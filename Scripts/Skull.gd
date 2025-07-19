@@ -5,6 +5,7 @@ class_name Skull
 @onready var collision_shape = $CollisionShape2D
 
 var holder_player: Player = null
+var holder_team_id: int = -1  # Store team ID of current holder (-1 = no team/FFA)
 var is_held: bool = false
 var follow_offset: Vector2 = Vector2(0, -30)  # Offset relative to player
 
@@ -52,6 +53,7 @@ func pickup_skull(player: Player):
 		return
 	
 	holder_player = player
+	holder_team_id = player.team  # Store the team ID of the holder
 	is_held = true
 	
 	# Hide collision detection while held
@@ -72,6 +74,7 @@ func drop_skull():
 	
 	is_held = false
 	holder_player = null
+	holder_team_id = -1  # Reset team ID when dropped
 	
 	# Re-enable collision detection
 	collision_shape.disabled = false
@@ -84,12 +87,37 @@ func drop_skull():
 	
 	print("Skull dropped!")
 
+func drop_skull_at_position(drop_position: Vector2):
+	"""Server-side skull drop logic at a specific position (e.g., corpse location)"""
+	if not multiplayer.is_server() or not is_held:
+		return
+	
+	# Set the skull position to the drop location
+	position = drop_position
+	
+	is_held = false
+	holder_player = null
+	holder_team_id = -1  # Reset team ID when dropped
+	
+	# Re-enable collision detection
+	collision_shape.disabled = false
+	
+	# Notify clients about the drop with the new position
+	_drop_skull_at_position_clients.rpc(drop_position)
+	
+	# Emit signal for GameManager
+	skull_dropped.emit()
+	
+	print("Skull dropped at corpse position: " + str(drop_position))
+
 @rpc("authority", "call_local", "reliable")
 func _pickup_skull_clients(player_id: int):
 	"""Client-side visual updates for skull pickup"""
 	# Find the player
 	var game_manager = get_tree().get_current_scene().get_node("GameManager")
 	holder_player = game_manager.get_player(player_id)
+	if holder_player:
+		holder_team_id = holder_player.team  # Sync team ID on clients
 	is_held = true
 	collision_shape.disabled = true
 
@@ -98,6 +126,16 @@ func _drop_skull_clients():
 	"""Client-side visual updates for skull drop"""
 	is_held = false
 	holder_player = null
+	holder_team_id = -1  # Reset team ID on clients
+	collision_shape.disabled = false
+
+@rpc("authority", "call_local", "reliable")
+func _drop_skull_at_position_clients(drop_position: Vector2):
+	"""Client-side visual updates for skull drop at specific position"""
+	position = drop_position
+	is_held = false
+	holder_player = null
+	holder_team_id = -1  # Reset team ID on clients
 	collision_shape.disabled = false
 
 @rpc("authority", "call_local", "reliable")
