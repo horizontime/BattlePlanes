@@ -263,20 +263,20 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 
-[node name="TeamDeathmatch" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
+[node name="TeamSlayer" type="Button" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
 layout_mode = 2
-text = "Team Deathmatch"
+text = "Team Slayer"
 
-[node name="TeamDeathmatchDesc" type="VBoxContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
+[node name="TeamSlayerDesc" type="VBoxContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox"]
 visible = false
 layout_mode = 2
 
-[node name="DescPanel" type="Panel" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc"]
+[node name="DescPanel" type="Panel" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayerDesc"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 120)
 theme_override_styles/panel = SubResource("StyleBoxFlat_config_panel")
 
-[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc/DescPanel"]
+[node name="DescMargin" type="MarginContainer" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayerDesc/DescPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -286,7 +286,7 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc/DescPanel/DescMargin"]
+[node name="DescLabel" type="Label" parent="VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayerDesc/DescPanel/DescMargin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Team vs team combat"

@@ -78,7 +78,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 16
-text = "Mode: Team Deathmatch"
+text = "Mode: Team Slayer"
 horizontal_alignment = 1
 
 [node name="PlayerCountLabel" type="Label" parent="VBoxContainer/Header"]

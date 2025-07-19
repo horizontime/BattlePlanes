@@ -28,11 +28,11 @@ class_name ServerConfig
 @onready var koth_desc = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/KingOfTheHillDesc"
 
 # UI References - Team Modes Tab
-@onready var team_deathmatch_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatch"
+@onready var team_slayer_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayer"
 @onready var capture_flag_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlag"
 
 # UI References - Team Modes Descriptions
-@onready var team_deathmatch_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamDeathmatchDesc"
+@onready var team_slayer_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayerDesc"
 @onready var capture_flag_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc"
 
 # UI References - Common
@@ -106,13 +106,13 @@ var ffa_presets = {
 }
 
 var team_presets = {
-	"Team Deathmatch": {
-		"player_lives": 3,
+	"Team Slayer": {
+		"player_lives": -1,
 		"max_players": 6,
 		"speed_multiplier": 1.0,
 		"damage_multiplier": 1.0,
 		"has_time_limit": true,
-		"time_limit_minutes": 15,
+		"time_limit_minutes": 5,
 		"hearts_enabled": true,
 		"clouds_enabled": true
 	},
@@ -138,7 +138,7 @@ var ffa_descriptions = {
 }
 
 var team_descriptions = {
-	"Team Deathmatch": "Team vs team combat\n• 3 Lives per player\n• Up to 6 players\n• 15 minute time limit\n• Heart powerups enabled\n• Balanced team warfare",
+	"Team Slayer": "Team vs team combat\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First team to 30 kills wins\n• Friendly-fire penalty active",
 	"Capture The Flag": "Capture and defend objectives\n• 5 Lives per player\n• Up to 8 players\n• 20 minute time limit\n• 1.2x speed, 0.8x damage\n• Extended tactical gameplay"
 }
 
@@ -177,7 +177,7 @@ func _ready():
 	koth_btn.pressed.connect(_on_game_mode_selected.bind("King of the Hill", "ffa"))
 	
 	# Connect signals - Team tab
-	team_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("Team Deathmatch", "team"))
+	team_slayer_btn.pressed.connect(_on_game_mode_selected.bind("Team Slayer", "team"))
 	capture_flag_btn.pressed.connect(_on_game_mode_selected.bind("Capture The Flag", "team"))
 	
 	# Connect signals - Common
@@ -262,7 +262,7 @@ func _hide_all_descriptions():
 	koth_desc.visible = false
 	
 	# Hide Team descriptions
-	team_deathmatch_desc.visible = false
+	team_slayer_desc.visible = false
 	capture_flag_desc.visible = false
 
 func _show_description(mode_name: String, mode_type: String):
@@ -284,8 +284,8 @@ func _show_description(mode_name: String, mode_type: String):
 	else:  # team mode
 		description_text = team_descriptions[mode_name]
 		match mode_name:
-			"Team Deathmatch":
-				description_container = team_deathmatch_desc
+			"Team Slayer":
+				description_container = team_slayer_desc
 			"Capture The Flag":
 				description_container = capture_flag_desc
 	
@@ -398,7 +398,7 @@ func _configure_game_mode_buttons():
 	classic_deathmatch_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	# Configure Team buttons
-	team_deathmatch_btn.focus_mode = Control.FOCUS_ALL
-	team_deathmatch_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	team_slayer_btn.focus_mode = Control.FOCUS_ALL
+	team_slayer_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	capture_flag_btn.focus_mode = Control.FOCUS_ALL
 	capture_flag_btn.mouse_filter = Control.MOUSE_FILTER_STOP 

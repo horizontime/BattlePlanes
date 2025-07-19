@@ -6,6 +6,7 @@ var local_player : Player
 # Team management for team-based game modes
 var team_assignments: Dictionary = {}  # player_id -> team (0 = Team A, 1 = Team B)
 var is_team_mode: bool = false
+var team_kill_scores: Dictionary = {0:0, 1:0}  # team kill scores for team-based modes
 
 # Game configuration settings
 var player_lives : int = 3
@@ -123,6 +124,9 @@ func _ready():
 	lobby_countdown_timer.wait_time = 1.0
 	lobby_countdown_timer.timeout.connect(_on_lobby_countdown_tick)
 	add_child(lobby_countdown_timer)
+	
+	# Initialize team kill scores
+	team_kill_scores = {0:0, 1:0}
 
 func apply_server_config(config: Dictionary):
 	"""Apply server configuration settings to the game"""
@@ -171,10 +175,10 @@ func apply_server_config(config: Dictionary):
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
-	# Update existing players' lives for KOTH mode and FFA Slayer mode
+	# Update existing players' lives for KOTH mode, FFA Slayer mode, and Team Slayer mode
 	for player in players:
-		if koth_mode or game_mode == "FFA Slayer":
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and FFA Slayer
+		if koth_mode or game_mode == "FFA Slayer" or game_mode == "Team Slayer":
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, and Team Slayer
 		else:
 			player.lives_remaining = player_lives
 	
@@ -412,6 +416,18 @@ func _time_limit_reached():
 				winner_names.append(winner.player_name)
 			var tie_text = "Tie Game!\n" + " & ".join(winner_names) + " tied with " + str(highest_score) + " seconds"
 			end_game_clients.rpc(tie_text)
+	elif game_mode == "Team Slayer":
+		# Team Slayer mode: winner is team with highest kill score
+		var team_a_score = team_kill_scores[0]
+		var team_b_score = team_kill_scores[1]
+		
+		if team_a_score > team_b_score:
+			end_game_clients.rpc("Team A (Time Limit Winner - " + str(team_a_score) + " kills)")
+		elif team_b_score > team_a_score:
+			end_game_clients.rpc("Team B (Time Limit Winner - " + str(team_b_score) + " kills)")
+		else:
+			# Teams tied
+			end_game_clients.rpc("Tie Game!\nTeam A & Team B tied with " + str(team_a_score) + " kills")
 	else:
 		# Standard mode: winner is player with highest kill score
 		var highest_score = -1
@@ -560,7 +576,21 @@ func on_player_die (player_id : int, attacker_id : int):
 	var player : Player = get_player(player_id)
 	var attacker : Player = get_player(attacker_id)
 	
-	attacker.increase_score(1)
+	# Team Slayer logic
+	if game_mode == "Team Slayer":
+		if attacker.team != player.team:
+			# Enemy kill: +1 to attacker score and team score
+			attacker.increase_score(1)
+			_update_team_score(attacker.team, 1)
+		else:
+			# Friendly fire: -1 to attacker score (minimum -1) and team score
+			attacker.score -= 1
+			if attacker.score < -1:
+				attacker.score = -1
+			_update_team_score(attacker.team, -1)
+	else:
+		# Standard behavior for other modes
+		attacker.increase_score(1)
 	
 	# Sync kills count to all clients
 	_sync_score.rpc(attacker_id, attacker.score)
@@ -580,7 +610,21 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	var player : Player = get_player(player_id)
 	var attacker : Player = get_player(attacker_id)
 	
-	attacker.increase_score(1)
+	# Team Slayer logic
+	if game_mode == "Team Slayer":
+		if attacker.team != player.team:
+			# Enemy kill: +1 to attacker score and team score
+			attacker.increase_score(1)
+			_update_team_score(attacker.team, 1)
+		else:
+			# Friendly fire: -1 to attacker score (minimum -1) and team score
+			attacker.score -= 1
+			if attacker.score < -1:
+				attacker.score = -1
+			_update_team_score(attacker.team, -1)
+	else:
+		# Standard behavior for other modes
+		attacker.increase_score(1)
 	
 	# Sync kills count to all clients
 	_sync_score.rpc(attacker_id, attacker.score)
@@ -595,8 +639,8 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	
 	print("Player %s eliminated! (Lives remaining: %d)" % [player.player_name, player.lives_remaining])
 	
-	# Don't check for last player standing in FFA Slayer mode (since it has unlimited lives)
-	if game_mode == "FFA Slayer":
+	# Don't check for last player standing in FFA Slayer mode or Team Slayer mode (unlimited lives)
+	if game_mode == "FFA Slayer" or game_mode == "Team Slayer":
 		return
 	
 	# Check if only one player remains alive
@@ -636,9 +680,9 @@ func reset_game():
 		player.cur_hp = player.max_hp
 		# Reset weapon heat to zero
 		player.cur_weapon_heat = 0.0
-		# Reset lives to configured amount (use 999 for unlimited in KOTH mode and FFA Slayer mode)
-		if koth_mode or game_mode == "FFA Slayer":
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and FFA Slayer
+		# Reset lives to configured amount (use 999 for unlimited in KOTH mode, FFA Slayer mode, and Team Slayer mode)
+		if koth_mode or game_mode == "FFA Slayer" or game_mode == "Team Slayer":
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, and Team Slayer
 		else:
 			player.lives_remaining = player_lives
 		
@@ -651,6 +695,14 @@ func reset_game():
 			_sync_deaths.rpc(player.player_id, player.deaths)  # deaths
 			_sync_oddball_score.rpc(player.player_id, player.oddball_score)  # oddball score
 			_sync_koth_score.rpc(player.player_id, player.koth_score)  # koth score
+	
+	# Reset team kill scores
+	team_kill_scores = {0:0, 1:0}
+	
+	# Sync team score resets to all clients
+	if multiplayer.is_server() and is_team_mode:
+		_sync_team_score.rpc(0, 0)
+		_sync_team_score.rpc(1, 0)
 	
 	# Reset time limit
 	if has_time_limit:
@@ -1100,6 +1152,13 @@ func _sync_score(player_id: int, score: int):
 	if player:
 		player.score = score
 
+@rpc("authority", "call_local", "reliable")
+func _sync_team_score(team: int, score: int):
+	"""Sync team score to all clients"""
+	if team_kill_scores.has(team):
+		team_kill_scores[team] = score
+		print("Team %d score synced: %d" % [team, score])
+
 # Send hill to a single newly-connected peer (called by NetworkManager)
 func _sync_hill_to_peer(peer_id: int):
 	"""Send current hill state to a specific peer"""
@@ -1127,6 +1186,33 @@ func _sync_score_to_peer(peer_id: int):
 		for player in players:
 			if player.score > 0:
 				rpc_id(peer_id, "_sync_score", player.player_id, player.score)
+		
+		# Also sync team scores to the new peer if in team mode
+		if is_team_mode:
+			for team in team_kill_scores:
+				if team_kill_scores[team] > 0:
+					rpc_id(peer_id, "_sync_team_score", team, team_kill_scores[team])
+
+func _update_team_score(team: int, delta: int):
+	"""Update team kill score and check for win condition (> 30)"""
+	if not is_team_mode or not team_kill_scores.has(team):
+		return
+	
+	# Update team score (allow negatives)
+	team_kill_scores[team] += delta
+	
+	# Ensure score doesn't go below 0
+	if team_kill_scores[team] < 0:
+		team_kill_scores[team] = 0
+	
+	# Sync team score to all clients
+	if multiplayer.is_server():
+		_sync_team_score.rpc(team, team_kill_scores[team])
+	
+	# Check for win condition (> 30)
+	if team_kill_scores[team] >= 30:
+		var team_name = "Team A" if team == 0 else "Team B"
+		end_game_clients.rpc(team_name + " (Team Victory - " + str(team_kill_scores[team]) + " kills)")
 
 func _on_lobby_countdown_tick():
 	lobby_countdown_seconds -= 1

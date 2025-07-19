@@ -125,8 +125,8 @@ func _ready():
 	
 	# Set initial lives from game config
 	if game_manager:
-		if game_manager.koth_mode or game_manager.game_mode == "FFA Slayer":
-			lives_remaining = 999  # Effectively unlimited lives for KOTH and FFA Slayer
+		if game_manager.koth_mode or game_manager.game_mode == "FFA Slayer" or game_manager.game_mode == "Team Slayer":
+			lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, and Team Slayer
 		else:
 			lives_remaining = game_manager.player_lives
 	
@@ -265,8 +265,8 @@ func die ():
 	# Always increment deaths counter
 	deaths += 1
 	
-	# In oddball mode, KOTH mode, or FFA Slayer mode, don't lose lives
-	if not game_manager.oddball_mode and not game_manager.koth_mode and game_manager.game_mode != "FFA Slayer":
+	# In oddball mode, KOTH mode, FFA Slayer mode, or Team Slayer mode, don't lose lives
+	if not game_manager.oddball_mode and not game_manager.koth_mode and game_manager.game_mode != "FFA Slayer" and game_manager.game_mode != "Team Slayer":
 		lives_remaining -= 1
 	
 	is_alive = false
@@ -276,12 +276,12 @@ func die ():
 	# Sync death state to all clients
 	_sync_death_state.rpc()
 	
-	# Check if player has lives remaining (always true in oddball mode, KOTH mode, or FFA Slayer mode)
-	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "FFA Slayer":
+	# Check if player has lives remaining (always true in oddball mode, KOTH mode, FFA Slayer mode, or Team Slayer mode)
+	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "FFA Slayer" or game_manager.game_mode == "Team Slayer":
 		respawn_timer.start(2)
 		game_manager.on_player_die(player_id, last_attacker_id)
 	else:
-		# Player is eliminated (won't happen in oddball mode, KOTH mode, or FFA Slayer mode)
+		# Player is eliminated (won't happen in oddball mode, KOTH mode, FFA Slayer mode, or Team Slayer mode)
 		game_manager.on_player_eliminated(player_id, last_attacker_id)
 	
 	die_clients.rpc()
@@ -296,8 +296,8 @@ func die_clients ():
 	audio_player.play()
 
 func respawn ():
-	# Only respawn if player has lives remaining (always true in oddball, KOTH, or FFA Slayer mode)
-	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "FFA Slayer":
+	# Only respawn if player has lives remaining (always true in oddball, KOTH, FFA Slayer, or Team Slayer mode)
+	if lives_remaining > 0 or game_manager.oddball_mode or game_manager.koth_mode or game_manager.game_mode == "FFA Slayer" or game_manager.game_mode == "Team Slayer":
 		is_alive = true
 		cur_hp = max_hp
 		throttle = 0.0

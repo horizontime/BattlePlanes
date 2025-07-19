@@ -158,7 +158,7 @@ func test_endscreen_countdown():
 	# Test the EndScreen components
 	var endscreen_tests = [
 		test_winner_display(),
-		test_countdown_label(),
+		await test_countdown_label(),
 		test_countdown_timer(),
 		test_button_visibility()
 	]

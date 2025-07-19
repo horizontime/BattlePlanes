@@ -29,7 +29,7 @@ The lobby system provides a waiting area for players before starting a game. Pla
 
 ### Team Lobby
 - Shows players divided into Team A and Team B
-- Used for: Team Deathmatch, Capture The Flag
+- Used for: Team Slayer, Capture The Flag
 - Automatic team assignment: odd player IDs → Team A, even player IDs → Team B
 
 ## Key Features
