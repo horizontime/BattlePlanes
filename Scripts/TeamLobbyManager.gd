@@ -23,6 +23,18 @@ func _create_player_entry(player_id: int) -> Control:
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_font_size_override("font_size", 14)
 	
+	# Highlight own username in yellow
+	if player_id == multiplayer.get_unique_id():
+		name_label.add_theme_color_override("font_color", Color.YELLOW)
+	
+	# You indicator
+	if player_id == multiplayer.get_unique_id():
+		var you_label = Label.new()
+		you_label.text = "(You) "
+		you_label.add_theme_color_override("font_color", Color.YELLOW)
+		you_label.add_theme_font_size_override("font_size", 12)
+		container.add_child(you_label)
+	
 	# Host indicator
 	if player_id == 1:  # Host is always ID 1
 		var host_label = Label.new()
