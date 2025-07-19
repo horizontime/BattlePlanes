@@ -19,6 +19,7 @@ var clouds_enabled : bool = true
 var oddball_mode : bool = false
 var koth_mode : bool = false
 var game_mode : String = ""
+var game_mode_type : String = ""
 var kill_limit : int = 15
 
 # Heart powerup management
@@ -80,6 +81,9 @@ func _ready():
 	timer.autostart = true
 	add_child(timer)
 	
+	# Connect Return to Lobby button signal
+	end_screen_button.pressed.connect(_on_return_lobby_pressed)
+	
 	# Create game timer for time limits
 	game_timer = Timer.new()
 	game_timer.wait_time = 1.0  # Update every second
@@ -123,6 +127,7 @@ func apply_server_config(config: Dictionary):
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
 	game_mode = config.get("game_mode", "")
+	game_mode_type = config.get("game_mode_type", "")
 	kill_limit = config.get("kill_limit", 15)
 	
 	# Send configuration to all clients
@@ -182,6 +187,7 @@ func _apply_server_config_clients(config: Dictionary):
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
 	game_mode = config.get("game_mode", "")
+	game_mode_type = config.get("game_mode_type", "")
 	kill_limit = config.get("kill_limit", 15)
 	
 	# Set initial timer value for clients
@@ -272,6 +278,7 @@ func _sync_config_to_peer(peer_id: int):
 			"oddball_mode": oddball_mode,
 			"koth_mode": koth_mode,
 			"game_mode": game_mode,
+			"game_mode_type": game_mode_type,
 			"kill_limit": kill_limit
 		}
 		rpc_id(peer_id, "_apply_server_config_clients", config)
@@ -681,9 +688,41 @@ func end_game_clients (winner_name : String):
 		end_screen_winner_text.text = str(winner_name, " wins!")
 	end_screen_button.visible = multiplayer.is_server()
 
-func _on_play_again_button_pressed():
-	reset_game()
+func _on_return_lobby_pressed():
+	if multiplayer.is_server():
+		_return_to_lobby()
 
+# Return to lobby function - server only
+func _return_to_lobby():
+	if not multiplayer.is_server():
+		print("_return_to_lobby can only be called on server")
+		return
+
+	# Stop all timers
+	heart_spawn_timer.stop()
+	oddball_score_timer.stop()
+	hill_movement_timer.stop()
+	koth_score_timer.stop()
+	game_timer.stop()
+
+	# Delete spawned powerups and objects
+	if current_heart != null and is_instance_valid(current_heart):
+		current_heart.queue_free()
+		current_heart = null
+	if current_skull != null and is_instance_valid(current_skull):
+		current_skull.queue_free()
+		current_skull = null
+	if current_hill != null and is_instance_valid(current_hill):
+		current_hill.queue_free()
+		current_hill = null
+
+	# Get NetworkManager and return to lobby BEFORE any scene changes
+	var network_manager = get_node("/root/Main/Network")
+	if network_manager:
+		network_manager.return_to_lobby(game_mode_type, network_manager.get_server_config(), team_assignments)
+		print("Returning to lobby...")
+	else:
+		print("Error: Could not find NetworkManager")
 func _get_place_suffix(score: int) -> String:
 	"""Convert a score to a place description (first, second, third, etc.)"""
 	if score == 0:

@@ -355,6 +355,54 @@ func _on_port_input_text_changed(new_text):
 func get_server_config() -> Dictionary:
 	return current_server_config
 
+# Return to lobby from game (server only)
+func return_to_lobby(mode_type: String, config: Dictionary, assignments: Dictionary = {}):
+	if not multiplayer.is_server():
+		print("return_to_lobby can only be called on server")
+		return
+	
+	print("Returning to lobby with mode: %s" % mode_type)
+	
+	# 1. Store config back into current_server_config
+	current_server_config = config
+	
+	# 2. Broadcast RPC to all clients to transition to lobby
+	_transition_to_lobby.rpc(mode_type, config, assignments)
+	
+	# 3. Create lobby locally on server (similar to _create_lobby_instead_of_server but without creating new server)
+	# The server peer is already running, so we just need to create the lobby scene
+	print("Creating lobby for mode type: ", mode_type)
+	var lobby_scene = ffa_lobby_scene if mode_type == "ffa" else team_lobby_scene
+	
+	current_lobby = lobby_scene.instantiate()
+	current_lobby.z_index = 100  # Make sure lobby is above NetworkUI
+	get_tree().current_scene.add_child(current_lobby)
+	print("Lobby created and added to scene")
+	
+	# Hide network UI and show lobby
+	network_ui.visible = false
+	current_lobby.visible = true
+	
+	# Force position the lobby to center of screen
+	current_lobby.position = Vector2.ZERO
+	
+	# Connect lobby signals
+	current_lobby.lobby_closed.connect(_on_lobby_closed)
+	current_lobby.game_started.connect(_on_game_started_from_lobby)
+	
+	# Initialize lobby
+	current_lobby.initialize_lobby(current_server_config, mode_type)
+	
+	# 4. If team lobby, inject team assignments
+	if mode_type == "team" and current_lobby is TeamLobbyManager:
+		var team_lobby = current_lobby as TeamLobbyManager
+		team_lobby._sync_all_team_assignments(assignments)
+	
+	# 5. Hide game UI
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._hide_game_ui()
+
 # RPC functions for lobby management
 @rpc("reliable")
 func _create_client_lobby(config: Dictionary, mode_type: String):
@@ -392,14 +440,56 @@ func _transition_to_game():
 	# Make sure NetworkUI is hidden
 	network_ui.visible = false
 	
-	# Show game UI
+	# Show game UI and reset game state
 	var game_manager = get_tree().current_scene.get_node("GameManager")
 	if game_manager:
 		game_manager._show_game_ui()
 		if multiplayer.is_server():
 			game_manager.apply_server_config(current_server_config)
+			# Reset the game to clear previous state (including end screen)
+			game_manager.reset_game()
 			# Show timer UI if game has time limit
 			if game_manager.has_time_limit:
 				game_manager._show_timer_ui()
 	
 	print("Game transition completed")
+
+@rpc("reliable")
+func _transition_to_lobby(mode_type: String, config: Dictionary, assignments: Dictionary = {}):
+	print("Transitioning from game to lobby (mode: %s)" % mode_type)
+	
+	# Store config
+	current_server_config = config
+	
+	# Create appropriate lobby scene
+	var lobby_scene = ffa_lobby_scene if mode_type == "ffa" else team_lobby_scene
+	current_lobby = lobby_scene.instantiate()
+	current_lobby.z_index = 100  # Make sure lobby is above NetworkUI
+	get_tree().current_scene.add_child(current_lobby)
+	print("Client lobby created and added to scene")
+	
+	# Make sure lobby is visible and NetworkUI is hidden
+	current_lobby.visible = true
+	network_ui.visible = false
+	
+	# Force position the lobby to center of screen
+	current_lobby.position = Vector2.ZERO
+	
+	# Connect lobby signals
+	current_lobby.lobby_closed.connect(_on_lobby_closed)
+	current_lobby.game_started.connect(_on_game_started_from_lobby)
+	
+	# Initialize lobby
+	current_lobby.initialize_lobby(config, mode_type)
+	
+	# If team lobby, inject team assignments
+	if mode_type == "team" and current_lobby is TeamLobbyManager:
+		var team_lobby = current_lobby as TeamLobbyManager
+		team_lobby._sync_all_team_assignments(assignments)
+	
+	# Hide game UI
+	var game_manager = get_tree().current_scene.get_node("GameManager")
+	if game_manager:
+		game_manager._hide_game_ui()
+	
+	print("Lobby transition completed")
