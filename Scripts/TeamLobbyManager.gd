@@ -115,6 +115,46 @@ func _sync_team_assignment(player_id: int, team: int):
 			if peer_id != sender_id:
 				_sync_team_assignment.rpc_id(peer_id, player_id, team)
 
+@rpc("reliable")
+func _sync_all_team_assignments(assignments: Dictionary):
+	"""Sync all team assignments to a client (used when joining)"""
+	team_assignments = assignments
+	_update_player_list()
+
+func _sync_lobby_state_to_peer(peer_id: int):
+	"""Override to include team assignments in lobby state sync"""
+	if not is_host:
+		return
+	
+	print("Syncing team lobby state to peer %d with team assignments: %s" % [peer_id, team_assignments])
+	
+	# Send lobby configuration and team assignments to new peer
+	_receive_team_lobby_state.rpc_id(peer_id, server_config, lobby_type, connected_players.keys(), player_names, team_assignments)
+
+@rpc("reliable")
+func _receive_team_lobby_state(config: Dictionary, type: String, player_ids: Array, names: Dictionary, assignments: Dictionary):
+	"""Override to receive team assignments in lobby state"""
+	# Call parent implementation first
+	server_config = config
+	lobby_type = type
+	
+	# Update player list from server
+	for pid in player_ids:
+		connected_players[pid] = true
+	
+	# Update player names from server
+	player_names = names
+	
+	# Update team assignments from server
+	team_assignments = assignments
+	print("Received team assignments: ", team_assignments)
+	
+	# Send our own name to the server
+	_request_local_player_name()
+	
+	_update_player_list()
+	_update_player_count()
+
 func get_team_assignments() -> Dictionary:
 	"""Get current team assignments for use by GameManager"""
 	return team_assignments.duplicate()
