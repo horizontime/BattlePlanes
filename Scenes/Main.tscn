@@ -895,6 +895,16 @@ text = "PlayerName has won the game!"
 label_settings = SubResource("LabelSettings_tv1gg")
 horizontal_alignment = 1
 
+[node name="CountdownLabel" type="Label" parent="EndScreen"]
+visible = false
+layout_mode = 0
+offset_left = 5.0
+offset_top = 100.0
+offset_right = 817.0
+offset_bottom = 150.0
+label_settings = SubResource("LabelSettings_tv1gg")
+horizontal_alignment = 1
+
 [node name="PlayAgainButton" type="Button" parent="EndScreen"]
 visible = false
 layout_mode = 0

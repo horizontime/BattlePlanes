@@ -54,6 +54,11 @@ var max_y : float = 230
 var health_bar_scene = preload("res://Scenes/HealthBar.tscn")
 var health_bars : Array[HealthBar] = []
 
+# Lobby countdown variables
+var lobby_countdown_seconds : int = 4
+var lobby_countdown_timer : Timer
+@onready var lobby_countdown_label = $"../EndScreen/CountdownLabel"
+
 @onready var camera_shake = $"../Camera2D"
 
 # end screen
@@ -81,8 +86,6 @@ func _ready():
 	timer.autostart = true
 	add_child(timer)
 	
-	# Connect Return to Lobby button signal
-	end_screen_button.pressed.connect(_on_return_lobby_pressed)
 	
 	# Create game timer for time limits
 	game_timer = Timer.new()
@@ -113,6 +116,13 @@ func _ready():
 	koth_score_timer.wait_time = 1.0  # 1 second
 	koth_score_timer.timeout.connect(_on_koth_score_timer)
 	add_child(koth_score_timer)
+	
+	# Create lobby countdown timer
+	lobby_countdown_timer = Timer.new()
+	lobby_countdown_timer.one_shot = false
+	lobby_countdown_timer.wait_time = 1.0
+	lobby_countdown_timer.timeout.connect(_on_lobby_countdown_tick)
+	add_child(lobby_countdown_timer)
 
 func apply_server_config(config: Dictionary):
 	"""Apply server configuration settings to the game"""
@@ -701,7 +711,16 @@ func end_game_clients (winner_name : String):
 		end_screen_winner_text.text = winner_name
 	else:
 		end_screen_winner_text.text = str(winner_name, " wins!")
-	end_screen_button.visible = multiplayer.is_server()
+	end_screen_button.visible = false
+
+	# Initialize countdown
+	lobby_countdown_seconds = 4
+	if lobby_countdown_label:
+		lobby_countdown_label.visible = true
+		lobby_countdown_label.text = "Returning to lobby in %d..." % lobby_countdown_seconds
+
+	# Start countdown timer
+	lobby_countdown_timer.start()
 
 func _on_return_lobby_pressed():
 	if multiplayer.is_server():
@@ -719,6 +738,7 @@ func _return_to_lobby():
 	hill_movement_timer.stop()
 	koth_score_timer.stop()
 	game_timer.stop()
+	lobby_countdown_timer.stop()
 
 	# Delete spawned powerups and objects
 	if current_heart != null and is_instance_valid(current_heart):
@@ -1107,3 +1127,12 @@ func _sync_score_to_peer(peer_id: int):
 		for player in players:
 			if player.score > 0:
 				rpc_id(peer_id, "_sync_score", player.player_id, player.score)
+
+func _on_lobby_countdown_tick():
+	lobby_countdown_seconds -= 1
+	if lobby_countdown_label and lobby_countdown_seconds >= 0:
+		lobby_countdown_label.text = "Returning to lobby in %d..." % lobby_countdown_seconds
+	if lobby_countdown_seconds <= 0:
+		lobby_countdown_timer.stop()
+		if multiplayer.is_server():
+			_return_to_lobby()  # existing function handles sending everyone back
