@@ -617,15 +617,30 @@ func get_player (player_id : int) -> Player:
 func reset_game():
 	for player in players:
 		player.respawn()
+		# Reset ALL player statistics
 		player.score = 0
 		player.oddball_score = 0
 		player.koth_score = 0
 		player.deaths = 0
+		# Reset health to full
+		player.cur_hp = player.max_hp
+		# Reset weapon heat to zero
+		player.cur_weapon_heat = 0.0
 		# Reset lives to configured amount (use 999 for unlimited in KOTH mode and FFA Slayer mode)
 		if koth_mode or game_mode == "FFA Slayer":
 			player.lives_remaining = 999  # Effectively unlimited lives for KOTH and FFA Slayer
 		else:
 			player.lives_remaining = player_lives
+		
+		# Sync ALL player statistics to all clients to update scoreboard UI
+		if multiplayer.is_server():
+			player._sync_health.rpc(player.cur_hp)
+			player._sync_weapon_heat.rpc(player.cur_weapon_heat)
+			# Sync all scores to update scoreboard UI
+			_sync_score.rpc(player.player_id, player.score)  # kills/score
+			_sync_deaths.rpc(player.player_id, player.deaths)  # deaths
+			_sync_oddball_score.rpc(player.player_id, player.oddball_score)  # oddball score
+			_sync_koth_score.rpc(player.player_id, player.koth_score)  # koth score
 	
 	# Reset time limit
 	if has_time_limit:
