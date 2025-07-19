@@ -270,7 +270,12 @@ func die ():
 	# Store death position for skull drop
 	var death_position = position
 	
-	# Drop skull if holding it in oddball mode
+	# Mark player dead and move off-screen BEFORE dropping skull to prevent re-pickup
+	is_alive = false
+	position = Vector2(0, 9999)
+	sprite.visible = false  # Hide sprite on server too
+	
+	# Now drop skull - player is already dead and moved away
 	game_manager.drop_skull_on_death(self, death_position)
 	
 	# Always increment deaths counter
@@ -279,10 +284,6 @@ func die ():
 	# In oddball mode, KOTH mode, FFA Slayer mode, Team Slayer mode, or Team Oddball mode, don't lose lives
 	if not game_manager.oddball_mode and not game_manager.koth_mode and game_manager.game_mode != "FFA Slayer" and game_manager.game_mode != "Team Slayer" and game_manager.game_mode != "Team Oddball":
 		lives_remaining -= 1
-	
-	is_alive = false
-	position = Vector2(0, 9999)
-	sprite.visible = false  # Hide sprite on server too
 	
 	# Sync death state to all clients
 	_sync_death_state.rpc()

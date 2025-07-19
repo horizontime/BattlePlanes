@@ -42,6 +42,9 @@ func _on_body_entered(body):
 		return
 		
 	if body is Player and not is_held:
+		# Only allow living players to pick up the skull
+		if not body.is_alive:
+			return
 		# Prevent immediate pickup if player has just spawned
 		if body.has_method("can_pickup_items") and not body.can_pickup_items():
 			return
