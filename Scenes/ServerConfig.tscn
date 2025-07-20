@@ -474,13 +474,7 @@ min_value = 1.0
 max_value = 60.0
 value = 5.0
 
-[node name="HeartsContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
-layout_mode = 2
-theme_override_constants/separation = 10
 
-[node name="HeartsCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/HeartsContainer"]
-layout_mode = 2
-text = "Heart powerups"
 
 [node name="CloudsContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2

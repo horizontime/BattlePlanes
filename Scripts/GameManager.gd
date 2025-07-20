@@ -28,7 +28,7 @@ var speed_multiplier : float = 1.0
 var damage_multiplier : float = 1.0
 var has_time_limit : bool = false
 var time_limit_minutes : int = 10
-var hearts_enabled : bool = false
+
 var clouds_enabled : bool = true
 var oddball_mode : bool = false
 var koth_mode : bool = false
@@ -36,10 +36,7 @@ var game_mode : String = ""
 var game_mode_type : String = ""
 var kill_limit : int = 15
 
-# Heart powerup management
-var heart_scene = preload("res://Scenes/Heart.tscn")
-var current_heart : Heart = null
-var heart_spawn_timer : Timer
+
 
 # Oddball mode management
 var skull_scene = preload("res://Scenes/Skull.tscn")
@@ -118,12 +115,7 @@ func _ready():
 	game_timer.timeout.connect(_on_game_timer_timeout)
 	add_child(game_timer)
 	
-	# Create heart spawn timer
-	heart_spawn_timer = Timer.new()
-	heart_spawn_timer.wait_time = 30.0  # 30 seconds
-	heart_spawn_timer.one_shot = true
-	heart_spawn_timer.timeout.connect(_spawn_heart)
-	add_child(heart_spawn_timer)
+
 	
 	# Create oddball score timer
 	oddball_score_timer = Timer.new()
@@ -184,7 +176,7 @@ func apply_server_config(config: Dictionary):
 	damage_multiplier = config.get("damage_multiplier", 1.0)
 	has_time_limit = config.get("has_time_limit", false)
 	time_limit_minutes = config.get("time_limit_minutes", 10)
-	hearts_enabled = config.get("hearts_enabled", false)
+
 	clouds_enabled = config.get("clouds_enabled", true)
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
@@ -205,9 +197,7 @@ func apply_server_config(config: Dictionary):
 	else:
 		_hide_timer_ui()
 	
-	# Spawn initial heart if enabled
-	if hearts_enabled and multiplayer.is_server():
-		_spawn_heart()
+
 	
 	# Team Oddball initialization
 	if game_mode == MODE_TEAM_ODDBALL and multiplayer.is_server():
@@ -258,7 +248,7 @@ func apply_server_config(config: Dictionary):
 	# Show game UI elements now that the game has started
 	_show_game_ui()
 	
-	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Hearts=%s, Clouds=%s, Oddball=%s, KOTH=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, hearts_enabled, clouds_enabled, oddball_mode, koth_mode])
+	print("Server config applied: Lives=%d, MaxPlayers=%d, Speed=%.1fx, Damage=%.1fx, Clouds=%s, Oddball=%s, KOTH=%s" % [player_lives, max_players, speed_multiplier, damage_multiplier, clouds_enabled, oddball_mode, koth_mode])
 
 @rpc("authority", "call_local", "reliable")
 func _apply_server_config_clients(config: Dictionary):
@@ -269,7 +259,7 @@ func _apply_server_config_clients(config: Dictionary):
 	damage_multiplier = config.get("damage_multiplier", 1.0)
 	has_time_limit = config.get("has_time_limit", false)
 	time_limit_minutes = config.get("time_limit_minutes", 10)
-	hearts_enabled = config.get("hearts_enabled", false)
+
 	clouds_enabled = config.get("clouds_enabled", true)
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
@@ -360,7 +350,7 @@ func _sync_config_to_peer(peer_id: int):
 			"damage_multiplier": damage_multiplier,
 			"has_time_limit": has_time_limit,
 			"time_limit_minutes": time_limit_minutes,
-			"hearts_enabled": hearts_enabled,
+	
 			"clouds_enabled": clouds_enabled,
 			"oddball_mode": oddball_mode,
 			"koth_mode": koth_mode,
@@ -800,15 +790,7 @@ func reset_game():
 	else:
 		_hide_timer_ui()
 	
-	# Reset heart spawning
-	if hearts_enabled and multiplayer.is_server():
-		# Remove any existing heart
-		if current_heart != null and is_instance_valid(current_heart):
-			current_heart.queue_free()
-		current_heart = null
-		heart_spawn_timer.stop()
-		# Spawn a new heart immediately
-		_spawn_heart()
+
 	
 	# Reset oddball mode
 	if oddball_mode and multiplayer.is_server():
@@ -877,7 +859,6 @@ func _return_to_lobby():
 		return
 
 	# Stop all timers
-	heart_spawn_timer.stop()
 	oddball_score_timer.stop()
 	hill_movement_timer.stop()
 	koth_score_timer.stop()
@@ -885,9 +866,6 @@ func _return_to_lobby():
 	lobby_countdown_timer.stop()
 
 	# Delete spawned powerups and objects
-	if current_heart != null and is_instance_valid(current_heart):
-		current_heart.queue_free()
-		current_heart = null
 	if current_skull != null and is_instance_valid(current_skull):
 		current_skull.queue_free()
 		current_skull = null
@@ -915,94 +893,11 @@ func _get_place_suffix(score: int) -> String:
 	else:
 		return str(score) + "th place"
 
-func _spawn_heart():
-	"""Spawn a heart powerup at a random location"""
-	# Only spawn on server and if hearts are enabled
-	if not multiplayer.is_server() or not hearts_enabled:
-		print("[Heart] _spawn_heart called but not server or hearts disabled")
-		return
-	
-	# Don't spawn if there's already a heart on the map
-	if current_heart != null and is_instance_valid(current_heart):
-		print("[Heart] _spawn_heart called but heart already exists")
-		return
-	
-	print("[Heart] Server spawning new heart...")
-	
-	# Create and position the heart (server side)
-	current_heart = heart_scene.instantiate()
-	current_heart.position = _get_random_heart_position()
-	
-	# Add to the spawned nodes (networked)
-	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(current_heart, true)
 
-	# Inform all clients to spawn a matching heart locally
-	print("[Heart] Calling RPC to spawn heart on clients at position: " + str(current_heart.position))
-	rpc("_spawn_heart_clients", current_heart.position)
-	
-	print("Heart spawned at position: " + str(current_heart.position))
 
-# ------------------------------------------------------------
-# HELPER: Random heart spawn with edge padding
-# ------------------------------------------------------------
 
-func _get_random_heart_position() -> Vector2:
-	# Ensure the heart doesn't spawn closer than 40 px to the window edges
-	var padding := 40.0
-	var x := randf_range(min_x + padding, max_x - padding)
-	var y := randf_range(min_y + padding, max_y - padding)
-	return Vector2(x, y)
 
-# ------------------------------------------------------------
-# CLIENT-SIDE HEART SPAWNING
-# ------------------------------------------------------------
 
-# Creates a heart on non-server peers so everyone can see it.
-# We mark it call_local so that the function executes immediately
-# on the receiving peer without a round-trip back to the server.
-@rpc("authority", "call_local", "reliable")
-func _spawn_heart_clients(position: Vector2):
-	print("[Heart] _spawn_heart_clients called with position: " + str(position))
-	
-	# Avoid duplicating the heart on the server
-	if multiplayer.is_server():
-		print("[Heart] Client spawn ignored on server")
-		return
-
-	# Safety: ensure we don't already have a heart
-	for child in get_tree().get_current_scene().get_node("Network/SpawnedNodes").get_children():
-		if child is Heart:
-			print("[Heart] Client already has a heart, skipping spawn")
-			return
-
-	print("[Heart] Client spawning heart at position: " + str(position))
-	var heart = heart_scene.instantiate()
-	heart.position = position
-	get_tree().get_current_scene().get_node("Network/SpawnedNodes").add_child(heart)
-	print("[Heart] Client heart spawned successfully")
-
-# Send heart to a single newly-connected peer (called by NetworkManager)
-@rpc("authority", "reliable")
-func _spawn_heart_for_peer(position: Vector2, peer_id: int):
-	# Only run this on the server; forward to target client
-	if not multiplayer.is_server():
-		return
-	
-	rpc_id(peer_id, "_spawn_heart_clients", position)
-
-func _on_heart_collected():
-	"""Called when a heart is collected by a player"""
-	# Only process on server
-	if not multiplayer.is_server():
-		return
-	
-	# Clear the current heart reference
-	current_heart = null
-	
-	# Start the timer to spawn a new heart in 30 seconds
-	if hearts_enabled:
-		heart_spawn_timer.start()
-		print("Next heart will spawn in 30 seconds")
 
 # ============================================================
 # ODDBALL MODE FUNCTIONS

@@ -13,7 +13,7 @@ const MODE_TEAM_ODDBALL = 5
 @onready var damage_value_label = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/DamageContainer/DamageValueLabel
 @onready var time_limit_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer/TimeLimitCheckBox
 @onready var time_limit_spinbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer/TimeLimitSpinBox
-@onready var hearts_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/HeartsContainer/HeartsCheckBox
+
 @onready var clouds_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/CloudsContainer/CloudsCheckBox
 @onready var team_mode_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TeamModeContainer/TeamModeCheckBox
 @onready var slayer_button = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SlayerContainer/SlayerButton
@@ -54,7 +54,7 @@ var speed_multiplier: float = 1.0
 var damage_multiplier: float = 1.0
 var has_time_limit: bool = true
 var time_limit_minutes: int = 5
-var hearts_enabled: bool = false
+
 var clouds_enabled: bool = true
 var team_mode: bool = false
 var slayer_mode: bool = true  # Default to slayer mode
@@ -77,7 +77,7 @@ var ffa_presets = {
 		"has_time_limit": true,
 		"time_limit_minutes": 5,
 		"kill_limit": 15,
-		"hearts_enabled": false,
+
 		"clouds_enabled": true
 	},
 	"Last Man Standing": {
@@ -87,7 +87,7 @@ var ffa_presets = {
 		"damage_multiplier": 1.0,
 		"has_time_limit": true,
 		"time_limit_minutes": 5,
-		"hearts_enabled": false,
+
 		"clouds_enabled": true
 	},
 	"Oddball": {
@@ -97,7 +97,7 @@ var ffa_presets = {
 		"damage_multiplier": 1.0,
 		"has_time_limit": true,
 		"time_limit_minutes": 5,
-		"hearts_enabled": false,
+
 		"clouds_enabled": true,
 		"oddball_mode": true
 	},
@@ -108,7 +108,7 @@ var ffa_presets = {
 		"damage_multiplier": 1.0,
 		"has_time_limit": true,
 		"time_limit_minutes": 5,
-		"hearts_enabled": false,
+
 		"clouds_enabled": true,
 		"koth_mode": true
 	}
@@ -122,7 +122,7 @@ var team_presets = {
 		"damage_multiplier": 1.0,
 		"has_time_limit": true,
 		"time_limit_minutes": 5,
-		"hearts_enabled": true,
+
 		"clouds_enabled": true
 	},
 
@@ -138,7 +138,7 @@ var team_presets = {
 		"friendly_fire": true,
 		"unlimited_lives": true,
 		"skull_enabled": true,
-		"hearts_enabled": false,
+
 		"clouds_enabled": true,
 		"oddball_mode": true
 	},
@@ -154,7 +154,7 @@ var team_presets = {
 		"friendly_fire": true,
 		"unlimited_lives": true,
 		"hill_enabled": true,
-		"hearts_enabled": false,
+
 		"clouds_enabled": true,
 		"koth_mode": true
 	}
@@ -183,7 +183,7 @@ func _ready():
 	damage_slider.value = damage_multiplier
 	time_limit_checkbox.button_pressed = has_time_limit
 	time_limit_spinbox.value = time_limit_minutes
-	hearts_checkbox.button_pressed = hearts_enabled
+
 	clouds_checkbox.button_pressed = clouds_enabled
 	team_mode_checkbox.button_pressed = team_mode
 	slayer_button.button_pressed = slayer_mode
@@ -200,7 +200,7 @@ func _ready():
 	damage_slider.value_changed.connect(_on_damage_changed)
 	time_limit_checkbox.toggled.connect(_on_time_limit_toggled)
 	time_limit_spinbox.value_changed.connect(_on_time_limit_value_changed)
-	hearts_checkbox.toggled.connect(_on_hearts_toggled)
+
 	clouds_checkbox.toggled.connect(_on_clouds_toggled)
 	team_mode_checkbox.toggled.connect(_on_team_mode_toggled)
 	slayer_button.toggled.connect(_on_game_mode_radio_toggled.bind("slayer"))
@@ -256,8 +256,7 @@ func _on_time_limit_value_changed(value: float):
 	time_limit_minutes = int(value)
 	_mark_as_custom()
 
-func _on_hearts_toggled(pressed: bool):
-	hearts_enabled = pressed
+
 	_mark_as_custom()
 
 func _on_clouds_toggled(pressed: bool):
@@ -366,7 +365,7 @@ func _apply_preset_config(config: Dictionary):
 	damage_multiplier = config.damage_multiplier
 	has_time_limit = config.has_time_limit
 	time_limit_minutes = config.get("time_limit_minutes", 5)
-	hearts_enabled = config.hearts_enabled
+
 	clouds_enabled = config.clouds_enabled
 	team_mode = config.get("is_team_mode", false)
 	slayer_mode = config.get("slayer_mode", true)
@@ -380,7 +379,7 @@ func _apply_preset_config(config: Dictionary):
 	damage_slider.value = damage_multiplier
 	time_limit_checkbox.button_pressed = has_time_limit
 	time_limit_spinbox.value = time_limit_minutes
-	hearts_checkbox.button_pressed = hearts_enabled
+
 	clouds_checkbox.button_pressed = clouds_enabled
 	team_mode_checkbox.button_pressed = team_mode
 	slayer_button.button_pressed = slayer_mode
@@ -493,7 +492,7 @@ func _on_start_server_pressed():
 		"damage_multiplier": damage_multiplier,
 		"has_time_limit": has_time_limit,
 		"time_limit_minutes": time_limit_minutes,
-		"hearts_enabled": hearts_enabled,
+
 		"clouds_enabled": clouds_enabled,
 		"team_mode": team_mode,
 		"slayer_mode": slayer_mode,
