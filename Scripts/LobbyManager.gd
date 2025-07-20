@@ -97,15 +97,18 @@ func _on_start_game_pressed():
 	_start_game_for_all.rpc()
 
 func _on_back_pressed():
-	# Handle leaving the lobby
+	# Handle leaving the lobby - return to main menu via window refresh
 	if is_host:
-		# Host closes the lobby
-		multiplayer.multiplayer_peer.close()
-	else:
-		# Client leaves the lobby
-		multiplayer.multiplayer_peer.close()
+		# Host triggers all clients to return to main menu
+		_return_all_to_main_menu.rpc()
 	
-	lobby_closed.emit()
+	# Refresh window to return to main menu
+	get_tree().reload_current_scene()
+
+@rpc("call_local", "reliable")
+func _return_all_to_main_menu():
+	# Called on all clients when host wants everyone to return to main menu
+	get_tree().reload_current_scene()
 
 @rpc("call_local", "reliable")
 func _start_game_for_all():
