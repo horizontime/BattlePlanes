@@ -453,6 +453,10 @@ func _on_start_server_pressed():
 				else:
 					final_game_mode = "FFA Slayer"
 					final_game_mode_type = "ffa"
+				# Update mode flags based on radio selection
+				slayer_mode = true
+				oddball_mode = false
+				koth_mode = false
 			elif selected_radio_mode == "oddball":
 				if is_team_mode:
 					final_game_mode = "Team Oddball"
@@ -460,6 +464,10 @@ func _on_start_server_pressed():
 				else:
 					final_game_mode = "Oddball"
 					final_game_mode_type = "ffa"
+				# Update mode flags based on radio selection
+				slayer_mode = false
+				oddball_mode = true
+				koth_mode = false
 			elif selected_radio_mode == "koth":
 				if is_team_mode:
 					final_game_mode = "Team King of the Hill"
@@ -467,6 +475,10 @@ func _on_start_server_pressed():
 				else:
 					final_game_mode = "King of the Hill"
 					final_game_mode_type = "ffa"
+				# Update mode flags based on radio selection
+				slayer_mode = false
+				oddball_mode = false
+				koth_mode = true
 		else:
 			# Keep "custom" as fallback only if no radio is selected in Custom tab
 			final_game_mode_type = "custom"

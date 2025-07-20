@@ -12,6 +12,15 @@ var team_kill_scores: Dictionary = {0:0, 1:0}  # team kill scores for team-based
 const MODE_TEAM_ODDBALL = "Team Oddball"
 const MODE_TEAM_KOTH = "Team King of the Hill"
 
+# Game Mode Mapping Table
+# This table defines how radio button selections map to game modes based on TeamMode setting:
+#
+# Radio         | TeamMode off                | TeamMode on
+# --------------|----------------------------|---------------------------
+# Slayer        | "FFA Slayer", type "ffa"   | "Team Slayer", type "team"
+# Oddball       | "Oddball", type "ffa"      | "Team Oddball", type "team"
+# KOTH          | "King of the Hill", type "ffa" | "Team King of the Hill", type "team"
+
 # Game configuration settings
 var player_lives : int = 3
 var max_players : int = 4
