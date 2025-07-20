@@ -15,8 +15,10 @@ const MODE_TEAM_ODDBALL = 5
 @onready var time_limit_spinbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer/TimeLimitSpinBox
 @onready var hearts_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/HeartsContainer/HeartsCheckBox
 @onready var clouds_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/CloudsContainer/CloudsCheckBox
-@onready var oddball_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer/OddballCheckBox
-@onready var koth_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/KOTHContainer/KOTHCheckBox
+@onready var team_mode_checkbox = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TeamModeContainer/TeamModeCheckBox
+@onready var slayer_button = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SlayerContainer/SlayerButton
+@onready var oddball_button = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer/OddballButton
+@onready var koth_button = $VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/KOTHContainer/KOTHButton
 
 # UI References - Free-for-all Tab
 @onready var classic_deathmatch_btn = $"VBoxContainer/TabContainer/Free-for-all/ScrollContainer/MarginContainer/FFAVBox/ClassicDeathmatch"
@@ -54,6 +56,8 @@ var has_time_limit: bool = false
 var time_limit_minutes: int = 5
 var hearts_enabled: bool = false
 var clouds_enabled: bool = true
+var team_mode: bool = false
+var slayer_mode: bool = true  # Default to slayer mode
 var oddball_mode: bool = false
 var koth_mode: bool = false
 var selected_game_mode: String = ""
@@ -181,8 +185,10 @@ func _ready():
 	time_limit_spinbox.value = time_limit_minutes
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
-	oddball_checkbox.button_pressed = oddball_mode
-	koth_checkbox.button_pressed = koth_mode
+	team_mode_checkbox.button_pressed = team_mode
+	slayer_button.button_pressed = slayer_mode
+	oddball_button.button_pressed = oddball_mode
+	koth_button.button_pressed = koth_mode
 	
 	# Configure game mode buttons for single-click interaction
 	_configure_game_mode_buttons()
@@ -196,8 +202,10 @@ func _ready():
 	time_limit_spinbox.value_changed.connect(_on_time_limit_value_changed)
 	hearts_checkbox.toggled.connect(_on_hearts_toggled)
 	clouds_checkbox.toggled.connect(_on_clouds_toggled)
-	oddball_checkbox.toggled.connect(_on_oddball_toggled)
-	koth_checkbox.toggled.connect(_on_koth_toggled)
+	team_mode_checkbox.toggled.connect(_on_team_mode_toggled)
+	slayer_button.toggled.connect(_on_game_mode_radio_toggled.bind("slayer"))
+	oddball_button.toggled.connect(_on_game_mode_radio_toggled.bind("oddball"))
+	koth_button.toggled.connect(_on_game_mode_radio_toggled.bind("koth"))
 	
 	# Connect signals - FFA tab
 	classic_deathmatch_btn.pressed.connect(_on_game_mode_selected.bind("FFA Slayer", "ffa"))
@@ -256,13 +264,17 @@ func _on_clouds_toggled(pressed: bool):
 	clouds_enabled = pressed
 	_mark_as_custom()
 
-func _on_oddball_toggled(pressed: bool):
-	oddball_mode = pressed
+func _on_team_mode_toggled(pressed: bool):
+	team_mode = pressed
 	_mark_as_custom()
 
-func _on_koth_toggled(pressed: bool):
-	koth_mode = pressed
-	_mark_as_custom()
+func _on_game_mode_radio_toggled(mode: String, pressed: bool):
+	if pressed:
+		# Set the selected game mode (ButtonGroup handles mutual exclusivity)
+		slayer_mode = (mode == "slayer")
+		oddball_mode = (mode == "oddball")
+		koth_mode = (mode == "koth")
+		_mark_as_custom()
 
 func _on_game_mode_selected(mode_name: String, mode_type: String):
 	selected_game_mode = mode_name
@@ -356,6 +368,8 @@ func _apply_preset_config(config: Dictionary):
 	time_limit_minutes = config.get("time_limit_minutes", 5)
 	hearts_enabled = config.hearts_enabled
 	clouds_enabled = config.clouds_enabled
+	team_mode = config.get("is_team_mode", false)
+	slayer_mode = config.get("slayer_mode", true)
 	oddball_mode = config.get("oddball_mode", false)
 	koth_mode = config.get("koth_mode", false)
 	
@@ -368,8 +382,10 @@ func _apply_preset_config(config: Dictionary):
 	time_limit_spinbox.value = time_limit_minutes
 	hearts_checkbox.button_pressed = hearts_enabled
 	clouds_checkbox.button_pressed = clouds_enabled
-	oddball_checkbox.button_pressed = oddball_mode
-	koth_checkbox.button_pressed = koth_mode
+	team_mode_checkbox.button_pressed = team_mode
+	slayer_button.button_pressed = slayer_mode
+	oddball_button.button_pressed = oddball_mode
+	koth_button.button_pressed = koth_mode
 	
 	_update_labels()
 	_update_time_limit_visibility()
@@ -417,6 +433,8 @@ func _on_start_server_pressed():
 		"time_limit_minutes": time_limit_minutes,
 		"hearts_enabled": hearts_enabled,
 		"clouds_enabled": clouds_enabled,
+		"team_mode": team_mode,
+		"slayer_mode": slayer_mode,
 		"oddball_mode": oddball_mode,
 		"koth_mode": koth_mode,
 		"game_mode": selected_game_mode,

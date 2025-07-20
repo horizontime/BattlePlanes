@@ -1,6 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://cn8y4k2s7dlgp"]
+[gd_scene load_steps=4 format=3 uid="uid://cn8y4k2s7dlgp"]
 
 [ext_resource type="Script" path="res://Scripts/ServerConfig.gd" id="1_3h7k9"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_game_modes"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_config_panel"]
 bg_color = Color(0.1, 0.1, 0.1, 0.9)
@@ -488,20 +490,48 @@ layout_mode = 2
 button_pressed = true
 text = "Enable clouds"
 
+[node name="TeamModeContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TeamModeCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TeamModeContainer"]
+layout_mode = 2
+text = "Team Mode"
+
+[node name="GameModeLabel" type="Label" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
+layout_mode = 2
+text = "Game Mode:"
+theme_override_font_sizes/font_size = 14
+
+[node name="SlayerContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlayerButton" type="Button" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/SlayerContainer"]
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_game_modes")
+text = "Slayer Mode"
+
 [node name="OddballContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="OddballCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer"]
+[node name="OddballButton" type="Button" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/OddballContainer"]
 layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_game_modes")
 text = "Oddball Mode"
 
 [node name="KOTHContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="KOTHCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/KOTHContainer"]
+[node name="KOTHButton" type="Button" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/KOTHContainer"]
 layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_game_modes")
 text = "King of the Hill Mode"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
