@@ -424,6 +424,56 @@ func _update_start_button_state():
 		start_server_button.focus_mode = Control.FOCUS_NONE
 
 func _on_start_server_pressed():
+	# Determine the correct game_mode and game_mode_type based on current tab and selections
+	var final_game_mode = selected_game_mode
+	var final_game_mode_type = game_mode_type
+	
+	var current_tab = tab_container.current_tab
+	
+	if current_tab == 2:  # Custom tab
+		# Read the selected radio button id/name and Team Mode checkbox state
+		var selected_radio_mode = ""
+		if slayer_button.button_pressed:
+			selected_radio_mode = "slayer"
+		elif oddball_button.button_pressed:
+			selected_radio_mode = "oddball"
+		elif koth_button.button_pressed:
+			selected_radio_mode = "koth"
+		
+		# Read Team Mode checkbox state
+		var is_team_mode = team_mode_checkbox.button_pressed
+		
+		# Map custom tab selections to proper game modes - the radio buttons (slayer/oddball/koth)
+		# combined with Team Mode checkbox determine FFA vs Team variant for each game type
+		if selected_radio_mode != "":
+			if selected_radio_mode == "slayer":
+				if is_team_mode:
+					final_game_mode = "Team Slayer"
+					final_game_mode_type = "team"
+				else:
+					final_game_mode = "FFA Slayer"
+					final_game_mode_type = "ffa"
+			elif selected_radio_mode == "oddball":
+				if is_team_mode:
+					final_game_mode = "Team Oddball"
+					final_game_mode_type = "team"
+				else:
+					final_game_mode = "Oddball"
+					final_game_mode_type = "ffa"
+			elif selected_radio_mode == "koth":
+				if is_team_mode:
+					final_game_mode = "Team King of the Hill"
+					final_game_mode_type = "team"
+				else:
+					final_game_mode = "King of the Hill"
+					final_game_mode_type = "ffa"
+		else:
+			# Keep "custom" as fallback only if no radio is selected in Custom tab
+			final_game_mode_type = "custom"
+	
+	# For standard tabs (FFA and Team), the selected_game_mode and game_mode_type are already correct
+	# from the _on_game_mode_selected() calls, so we use them as-is
+	
 	var config = {
 		"player_lives": player_lives,
 		"max_players": max_players,
@@ -437,8 +487,8 @@ func _on_start_server_pressed():
 		"slayer_mode": slayer_mode,
 		"oddball_mode": oddball_mode,
 		"koth_mode": koth_mode,
-		"game_mode": selected_game_mode,
-		"game_mode_type": game_mode_type
+		"game_mode": final_game_mode,
+		"game_mode_type": final_game_mode_type
 	}
 	server_config_confirmed.emit(config)
 
