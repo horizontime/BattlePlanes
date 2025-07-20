@@ -32,13 +32,11 @@ const MODE_TEAM_ODDBALL = 5
 
 # UI References - Team Modes Tab
 @onready var team_slayer_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayer"
-@onready var capture_flag_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlag"
 @onready var team_oddball_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamOddball"
 @onready var team_koth_btn = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamKingOfTheHill"
 
 # UI References - Team Modes Descriptions
 @onready var team_slayer_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamSlayerDesc"
-@onready var capture_flag_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/CaptureTheFlagDesc"
 @onready var team_oddball_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamOddballDesc"
 @onready var team_koth_desc = $"VBoxContainer/TabContainer/Team Modes/ScrollContainer/MarginContainer/TeamVBox/TeamKingOfTheHillDesc"
 
@@ -123,16 +121,7 @@ var team_presets = {
 		"hearts_enabled": true,
 		"clouds_enabled": true
 	},
-	"Capture The Flag": {
-		"player_lives": 5,
-		"max_players": 8,
-		"speed_multiplier": 1.2,
-		"damage_multiplier": 0.8,
-		"has_time_limit": true,
-		"time_limit_minutes": 20,
-		"hearts_enabled": true,
-		"clouds_enabled": true
-	},
+
 	"Team Oddball": {
 		"is_team_mode": true,
 		"player_lives": -1,  # Unlimited lives
@@ -177,7 +166,7 @@ var ffa_descriptions = {
 
 var team_descriptions = {
 	"Team Slayer": "Team vs team combat\n• Unlimited lives\n• Up to 6 players\n• 5 minute time limit\n• First team to 30 kills wins\n• Friendly-fire penalty active",
-	"Capture The Flag": "Capture and defend objectives\n• 5 Lives per player\n• Up to 8 players\n• 20 minute time limit\n• 1.2x speed, 0.8x damage\n• Extended tactical gameplay",
+
 	"Team Oddball": "Hold the skull as a team for 100 s to win.\n• Unlimited lives\n• Up to 6 players\n• 100 second time limit\n• First team to hold skull for total of 100s wins\n• Friendly-fire penalty active",
 	"Team King of the Hill": "Control the hill as a team for 100 s to win.\n• Up to 6 players\n• 5 minute time limit\n• First team to hold hill for total of 100s wins\n• Hill moves every 30 seconds"
 }
@@ -218,7 +207,7 @@ func _ready():
 	
 	# Connect signals - Team tab
 	team_slayer_btn.pressed.connect(_on_game_mode_selected.bind("Team Slayer", "team"))
-	capture_flag_btn.pressed.connect(_on_game_mode_selected.bind("Capture The Flag", "team"))
+
 	team_oddball_btn.pressed.connect(_on_game_mode_selected.bind("Team Oddball", "team"))
 	team_koth_btn.pressed.connect(_on_game_mode_selected.bind("Team King of the Hill", "team"))
 	
@@ -305,7 +294,6 @@ func _hide_all_descriptions():
 	
 	# Hide Team descriptions
 	team_slayer_desc.visible = false
-	capture_flag_desc.visible = false
 	team_oddball_desc.visible = false
 	team_koth_desc.visible = false
 
@@ -330,8 +318,7 @@ func _show_description(mode_name: String, mode_type: String):
 		match mode_name:
 			"Team Slayer":
 				description_container = team_slayer_desc
-			"Capture The Flag":
-				description_container = capture_flag_desc
+
 			"Team Oddball":
 				description_container = team_oddball_desc
 			"Team King of the Hill":
@@ -448,8 +435,7 @@ func _configure_game_mode_buttons():
 	# Configure Team buttons
 	team_slayer_btn.focus_mode = Control.FOCUS_ALL
 	team_slayer_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-	capture_flag_btn.focus_mode = Control.FOCUS_ALL
-	capture_flag_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+
 	team_oddball_btn.focus_mode = Control.FOCUS_ALL
 	team_oddball_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	team_koth_btn.focus_mode = Control.FOCUS_ALL
