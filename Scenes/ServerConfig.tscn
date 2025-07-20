@@ -464,6 +464,7 @@ theme_override_constants/separation = 10
 
 [node name="TimeLimitCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer"]
 layout_mode = 2
+button_pressed = true
 text = "Time Limit (minutes):"
 
 [node name="TimeLimitSpinBox" type="SpinBox" parent="VBoxContainer/TabContainer/Custom/ScrollContainer/MarginContainer/CustomVBox/TimeLimitContainer"]
