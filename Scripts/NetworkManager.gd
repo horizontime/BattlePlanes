@@ -7,6 +7,41 @@ const MAX_CLIENTS : int = 4
 @onready var port_input = $NetworkUI/VBoxContainer/PortInput
 @onready var username_input = $NetworkUI/VBoxContainer/UsernameInput
 
+# --- Networking configuration -------------------------------------------------
+# Set to 'true' to force WebSocket networking (required for HTML5 builds).
+# When 'false' the game will continue to use ENet (desktop-only).
+# You can also control this at runtime via the PROJECT SETTINGS or ENV vars
+# if you want automatic selection, but for now we simply auto-enable it when
+# running in a browser.
+
+const USE_WEBSOCKET : bool = true
+
+# Build a MultiplayerPeer suitable for the current platform / role.
+# When `is_server` is true we create a listening peer, otherwise we return a
+# client peer that tries to connect.
+func _make_multiplayer_peer(is_server: bool, ip: String = "", port: int = 0) -> MultiplayerPeer:
+	if USE_WEBSOCKET:
+		var ws := WebSocketMultiplayerPeer.new()
+		if is_server:
+			var err := ws.create_server(port)
+			if err != OK:
+				push_error("WebSocket server failed to start: %s" % error_string(err))
+		else:
+			var scheme := "wss" if OS.has_feature("web") else "ws"
+			var url := "%s://%s:%d" % [scheme, ip, port]
+			var err := ws.create_client(url)
+			if err != OK:
+				push_error("WebSocket client failed to connect (%s): %s" % [url, error_string(err)])
+		return ws
+	else:
+		var enet := ENetMultiplayerPeer.new()
+		if is_server:
+			enet.create_server(port, MAX_CLIENTS)
+		else:
+			enet.create_client(ip, port)
+		return enet
+
+# -----------------------------------------------------------------------------
 # Server configuration
 var server_config_scene = preload("res://Scenes/ServerConfig.tscn")
 var server_config_ui = null
@@ -44,9 +79,9 @@ func _is_valid_port() -> bool:
 	
 	var port_number = port_text.to_int()
 	
-	# Check if port is in valid range (1024 - 65535 for user applications)
-	if port_number < 1024 or port_number > 65535:
-		_show_port_error("Port must be between 1024 and 65535!")
+	# Allow any valid port number
+	if port_number <= 0 or port_number > 65535:
+		_show_port_error("Port must be a valid number between 1 and 65535!")
 		return false
 	
 	return true
@@ -136,8 +171,7 @@ func _create_lobby_instead_of_server():
 	# Start the actual server
 	var max_clients = current_server_config.get("max_players", MAX_CLIENTS)
 	
-	var peer = ENetMultiplayerPeer.new()
-	peer.create_server(int(port_input.text), max_clients)
+	var peer: MultiplayerPeer = _make_multiplayer_peer(true, "", int(port_input.text))
 	multiplayer.multiplayer_peer = peer
 	
 	# Don't connect player_connected yet - lobby will handle this
@@ -173,8 +207,7 @@ func _create_lobby_instead_of_server():
 func _actually_start_server():
 	var max_clients = current_server_config.get("max_players", MAX_CLIENTS)
 	
-	var peer = ENetMultiplayerPeer.new()
-	peer.create_server(int(port_input.text), max_clients)
+	var peer: MultiplayerPeer = _make_multiplayer_peer(true, "", int(port_input.text))
 	multiplayer.multiplayer_peer = peer
 	
 	multiplayer.peer_connected.connect(_on_player_connected)
@@ -242,8 +275,7 @@ func start_client ():
 	if not _is_valid_username():
 		return
 	
-	var peer = ENetMultiplayerPeer.new()
-	peer.create_client(ip_input.text, int(port_input.text))
+	var peer: MultiplayerPeer = _make_multiplayer_peer(false, ip_input.text, int(port_input.text))
 	multiplayer.multiplayer_peer = peer
 	
 	multiplayer.connected_to_server.connect(_connected_to_server)
