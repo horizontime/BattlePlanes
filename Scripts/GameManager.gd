@@ -10,6 +10,7 @@ var team_kill_scores: Dictionary = {0:0, 1:0}  # team kill scores for team-based
 
 # Game mode constants
 const MODE_TEAM_ODDBALL = "Team Oddball"
+const MODE_TEAM_KOTH = "Team King of the Hill"
 
 # Game configuration settings
 var player_lives : int = 3
@@ -51,6 +52,10 @@ var current_hill : Hill = null
 var hill_movement_timer : Timer
 var koth_score_timer : Timer
 var koth_win_score : int = 60
+
+# Team KOTH mode variables
+var team_hill_time: Dictionary = {TEAM_A: 0, TEAM_B: 0}
+var team_koth_win_score : int = 100
 
 # Time limit tracking
 var time_limit_seconds : float = 0.0
@@ -217,17 +222,27 @@ func apply_server_config(config: Dictionary):
 		await get_tree().create_timer(0.5).timeout
 		_spawn_skull()
 	
-	# Spawn hill if KOTH mode is enabled
-	if koth_mode and multiplayer.is_server():
+	# Team King of the Hill initialization
+	if game_mode == MODE_TEAM_KOTH and multiplayer.is_server():
+		# Initialize team hill time
+		team_hill_time = {TEAM_A: 0, TEAM_B: 0}
+		# Set koth_mode to true for hill spawning
+		koth_mode = true
+		print("Team King of the Hill mode enabled, spawning hill...")
+		# Small delay to ensure all clients are ready
+		await get_tree().create_timer(0.5).timeout
+		_spawn_hill()
+	elif koth_mode and multiplayer.is_server():
+		# Spawn hill if KOTH mode is enabled
 		_spawn_hill()
 	
 	# Control cloud visibility
 	_set_clouds_visibility(clouds_enabled)
 	
-	# Update existing players' lives for KOTH mode, FFA Slayer mode, and Team Slayer mode
+	# Update existing players' lives for KOTH mode, FFA Slayer mode, Team Slayer mode, and Team KOTH mode
 	for player in players:
-		if koth_mode or game_mode == "FFA Slayer" or game_mode == "Team Slayer":
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, and Team Slayer
+		if koth_mode or game_mode == "FFA Slayer" or game_mode == "Team Slayer" or game_mode == MODE_TEAM_KOTH:
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, Team Slayer, and Team KOTH
 		else:
 			player.lives_remaining = player_lives
 	
@@ -477,6 +492,9 @@ func _time_limit_reached():
 		else:
 			# Teams tied
 			end_game_clients.rpc("Tie Game!\nTeam A & Team B tied with " + str(team_a_score) + " kills")
+	elif game_mode == MODE_TEAM_KOTH:
+		# Team King of the Hill mode: winner is team with most hill time
+		_check_team_koth_time_limit()
 	else:
 		# Standard mode: winner is player with highest kill score
 		var highest_score = -1
@@ -628,6 +646,8 @@ func on_player_die (player_id : int, attacker_id : int):
 	# Team Oddball kill handling
 	if game_mode == MODE_TEAM_ODDBALL:
 		_handle_team_oddball_kill(player, attacker)
+	elif game_mode == MODE_TEAM_KOTH:
+		_handle_team_koth_kill(player, attacker)
 	elif game_mode == "Team Slayer":
 		if attacker.team != player.team:
 			# Enemy kill: +1 to attacker score and team score
@@ -661,7 +681,7 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 	var player : Player = get_player(player_id)
 	var attacker : Player = get_player(attacker_id)
 	
-	# Team Slayer logic
+	# Team modes logic
 	if game_mode == "Team Slayer":
 		if attacker.team != player.team:
 			# Enemy kill: +1 to attacker score and team score
@@ -673,6 +693,8 @@ func on_player_eliminated (player_id : int, attacker_id : int):
 			if attacker.score < -1:
 				attacker.score = -1
 			_update_team_score(attacker.team, -1)
+	elif game_mode == MODE_TEAM_KOTH:
+		_handle_team_koth_kill(player, attacker)
 	else:
 		# Standard behavior for other modes
 		attacker.increase_score(1)
@@ -731,9 +753,9 @@ func reset_game():
 		player.cur_hp = player.max_hp
 		# Reset weapon heat to zero
 		player.cur_weapon_heat = 0.0
-		# Reset lives to configured amount (use 999 for unlimited in KOTH mode, FFA Slayer mode, and Team Slayer mode)
-		if koth_mode or game_mode == "FFA Slayer" or game_mode == "Team Slayer":
-			player.lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, and Team Slayer
+		# Reset lives to configured amount (use 999 for unlimited in KOTH mode, FFA Slayer mode, Team Slayer mode, and Team KOTH mode)
+		if koth_mode or game_mode == "FFA Slayer" or game_mode == "Team Slayer" or game_mode == MODE_TEAM_KOTH:
+			player.lives_remaining = 999  # Effectively unlimited lives for KOTH, FFA Slayer, Team Slayer, and Team KOTH
 		else:
 			player.lives_remaining = player_lives
 		
@@ -750,10 +772,16 @@ func reset_game():
 	# Reset team kill scores
 	team_kill_scores = {0:0, 1:0}
 	
+	# Reset team hill time for Team KOTH mode
+	team_hill_time = {TEAM_A: 0, TEAM_B: 0}
+	
 	# Sync team score resets to all clients
 	if multiplayer.is_server() and is_team_mode:
 		_sync_team_score.rpc(0, 0)
 		_sync_team_score.rpc(1, 0)
+		# Sync team hill time reset
+		if game_mode == MODE_TEAM_KOTH:
+			_sync_team_hill_time.rpc(team_hill_time)
 	
 	# Reset time limit
 	if has_time_limit:
@@ -1150,17 +1178,51 @@ func _on_koth_score_timer():
 	"""Give 1 point every second to all players in the hill"""
 	if current_hill and is_instance_valid(current_hill):
 		var players_in_hill = current_hill.get_players_in_hill()
-		for player in players_in_hill:
-			if is_instance_valid(player):
-				player.koth_score += 1
-				
-				# Sync score to all clients
-				_sync_koth_score.rpc(player.player_id, player.koth_score)
-				
-				# Check for win condition
-				if player.koth_score >= koth_win_score:
-					_koth_win(player)
-					return
+		
+		# Handle Team King of the Hill mode
+		if game_mode == MODE_TEAM_KOTH:
+			_handle_team_koth_scoring(players_in_hill)
+		else:
+			# Regular KOTH mode
+			for player in players_in_hill:
+				if is_instance_valid(player):
+					player.koth_score += 1
+					
+					# Sync score to all clients
+					_sync_koth_score.rpc(player.player_id, player.koth_score)
+					
+					# Check for win condition
+					if player.koth_score >= koth_win_score:
+						_koth_win(player)
+						return
+
+func _handle_team_koth_scoring(players_in_hill: Array):
+	"""Handle Team King of the Hill scoring"""
+	# Count which teams have players in hill
+	var teams_in_hill = {}
+	for player in players_in_hill:
+		if is_instance_valid(player) and player.player_id in team_assignments:
+			var team = team_assignments[player.player_id]
+			teams_in_hill[team] = true
+	
+	# Award points only if exactly one team controls the hill
+	if teams_in_hill.size() == 1:
+		var controlling_team = teams_in_hill.keys()[0]
+		team_hill_time[controlling_team] += 1
+		
+		# Sync team hill time to all clients
+		_sync_team_hill_time.rpc(team_hill_time)
+		
+		# Check for team win condition
+		if team_hill_time[controlling_team] >= team_koth_win_score:
+			_team_koth_win(controlling_team)
+
+func _team_koth_win(winning_team: int):
+	"""Handle Team King of the Hill win"""
+	koth_score_timer.stop()
+	hill_movement_timer.stop()
+	var team_name = "Team A" if winning_team == TEAM_A else "Team B"
+	end_game_clients.rpc(team_name + " (Team King of the Hill Winner)")
 
 func _koth_win(winner: Player):
 	"""Handle KOTH mode win"""
@@ -1205,6 +1267,11 @@ func _sync_koth_score(player_id: int, score: int):
 	var player = get_player(player_id)
 	if player:
 		player.koth_score = score
+
+@rpc("authority", "call_local", "reliable")
+func _sync_team_hill_time(hill_times: Dictionary):
+	"""Sync team hill times to all clients"""
+	team_hill_time = hill_times
 
 @rpc("authority", "call_local", "reliable")
 func _sync_deaths(player_id: int, deaths: int):
@@ -1475,3 +1542,30 @@ func _on_lobby_countdown_tick():
 		lobby_countdown_timer.stop()
 		if multiplayer.is_server():
 			_return_to_lobby()  # existing function handles sending everyone back
+
+# ============================================================
+# TEAM KING OF THE HILL MODE FUNCTIONS
+# ============================================================
+
+func _handle_team_koth_kill(victim: Player, killer: Player):
+	"""Handle kill counting for Team King of the Hill mode"""
+	if killer and killer.team != victim.team:
+		# Enemy kill: +1 to killer's score
+		killer.increase_score(1)
+	elif killer:
+		# Friendly fire: -1 to killer's score (minimum -1)
+		killer.score -= 1
+		if killer.score < -1:
+			killer.score = -1
+
+func _check_team_koth_time_limit():
+	"""Check Team KOTH time limit and determine winner based on hill time"""
+	if time_limit_seconds <= 0.0:
+		# Determine winner based on hill time
+		if team_hill_time[TEAM_A] > team_hill_time[TEAM_B]:
+			_team_koth_win(TEAM_A)
+		elif team_hill_time[TEAM_B] > team_hill_time[TEAM_A]:
+			_team_koth_win(TEAM_B)
+		else:
+			# Complete tie on hill time
+			end_game_clients.rpc("Draw! Both teams tied on hill control time.")

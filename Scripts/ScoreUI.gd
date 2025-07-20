@@ -33,7 +33,11 @@ func _process(delta):
 		last_koth_mode = game_manager.koth_mode
 		last_game_mode = game_manager.game_mode
 		
-		if game_manager.koth_mode:
+		if game_manager.game_mode == "Team King of the Hill":
+			header_lives.text = "Hill Time"  # Show team hill time
+			header_kills.text = "Kills"
+			header_score.visible = false  # Don't need separate score column
+		elif game_manager.koth_mode:
 			header_lives.text = "Score"  # Reuse lives header for KOTH score
 			header_kills.text = "Kills"
 			header_score.visible = false  # Don't need separate score column
@@ -69,6 +73,10 @@ func _process(delta):
 	if game_manager.game_mode == "Team Oddball" and skull_status_container:
 		_update_skull_status()
 	
+	# Update Team King of the Hill status in real-time
+	if game_manager.game_mode == "Team King of the Hill" and team_score_container:
+		_update_team_hill_status()
+	
 	# Clear existing player entries
 	for child in player_list.get_children():
 		child.queue_free()
@@ -92,7 +100,13 @@ func _process(delta):
 		
 		# Lives/Score column (context dependent)
 		var lives_label = Label.new()
-		if game_manager.koth_mode:
+		if game_manager.game_mode == "Team King of the Hill":
+			# Show team hill time for this player's team
+			if player.team == 0:
+				lives_label.text = str(int(game_manager.team_hill_time[0])) + "s"
+			else:
+				lives_label.text = str(int(game_manager.team_hill_time[1])) + "s"
+		elif game_manager.koth_mode:
 			lives_label.text = str(player.koth_score)  # Show KOTH score
 		elif game_manager.game_mode == "Team Oddball":
 			# Show team skull time for this player's team
@@ -125,8 +139,8 @@ func _process(delta):
 		kills_label.add_theme_font_size_override("font_size", 11)
 		kills_label.add_theme_color_override("font_color", Color.WHITE)
 		
-		# Color-code rows by team for clarity in Team Oddball mode
-		if game_manager.game_mode == "Team Oddball":
+		# Color-code rows by team for clarity in Team Oddball and Team KOTH modes
+		if game_manager.game_mode == "Team Oddball" or game_manager.game_mode == "Team King of the Hill":
 			if player.team == 0:  # Team A
 				name_label.add_theme_color_override("font_color", Color.CYAN)
 				lives_label.add_theme_color_override("font_color", Color.CYAN)
@@ -216,6 +230,38 @@ func _update_team_score_display():
 			skull_status_container.add_child(team_a_time_label)
 			skull_status_container.add_child(team_b_time_label)
 			skull_status_container.add_child(separator)
+	elif game_manager.game_mode == "Team King of the Hill":
+		# Create Team KOTH hill time display if it doesn't exist
+		if team_score_container == null:
+			team_score_container = VBoxContainer.new()
+			team_score_container.name = "TeamHillContainer"
+			
+			# Add team hill container at the top
+			$VBoxContainer.add_child(team_score_container)
+			$VBoxContainer.move_child(team_score_container, 0)  # Move to top
+			
+			# Create team hill time labels
+			var team_a_hill_label = Label.new()
+			team_a_hill_label.name = "TeamAHillLabel"
+			team_a_hill_label.text = "Team A: 0s"
+			team_a_hill_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			team_a_hill_label.add_theme_font_size_override("font_size", 12)
+			team_a_hill_label.add_theme_color_override("font_color", Color.CYAN)
+			
+			var team_b_hill_label = Label.new()
+			team_b_hill_label.name = "TeamBHillLabel"
+			team_b_hill_label.text = "Team B: 0s"
+			team_b_hill_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			team_b_hill_label.add_theme_font_size_override("font_size", 12)
+			team_b_hill_label.add_theme_color_override("font_color", Color.YELLOW)
+			
+			# Add separator
+			var separator = HSeparator.new()
+			separator.add_theme_constant_override("separation", 5)
+			
+			team_score_container.add_child(team_a_hill_label)
+			team_score_container.add_child(team_b_hill_label)
+			team_score_container.add_child(separator)
 	else:
 			# Hide or remove containers for other modes
 			if team_score_container:
@@ -244,3 +290,13 @@ func _update_skull_status():
 		if team_a_time_label and team_b_time_label:
 			team_a_time_label.text = "Team A: %ds" % int(game_manager.team_skull_time[0])
 			team_b_time_label.text = "Team B: %ds" % int(game_manager.team_skull_time[1])
+
+func _update_team_hill_status():
+	"""Update team hill time labels with current times"""
+	if team_score_container:
+		var team_a_hill_label = team_score_container.get_node("TeamAHillLabel")
+		var team_b_hill_label = team_score_container.get_node("TeamBHillLabel")
+		
+		if team_a_hill_label and team_b_hill_label:
+			team_a_hill_label.text = "Team A: %ds" % int(game_manager.team_hill_time[0])
+			team_b_hill_label.text = "Team B: %ds" % int(game_manager.team_hill_time[1])
